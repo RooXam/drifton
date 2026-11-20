@@ -42,7 +42,7 @@ Un fichier = une brique ; l'ordre des `<script>` en bas de chaque `index.html` c
 | `audio.js` | `createAudio()` : AudioContext réglé pour iPhone / iPad |
 | `library.js` | bibliothèque sur l'appareil (IndexedDB) : morceaux, paroles, MIDI ; export / import |
 | `synth/` | synthé : `util`, `params` (liste des paramètres → UI), `envelope`, `lfo`, `osc` (unisson), `voice`, `synth` (`Synth`, `MasterBus`), `effects` (`FxBus` : réverbe, écho, chaleur, bande, pulsation), `storage` (sons sauvegardés), `patches`, `keyboard`, `scope`, `main` |
-| `generator/` | Focus music : `harmony` (modes, accords, Markov, voice leading), `generator` (rôles, grille de mesures, arpèges, conducteur des couches), `moods` (ambiances, Auto selon l'heure), `main` ; réutilise `synth/` |
+| `generator/` | Focus music : `harmony` (modes, accords, Markov, voice leading), `generator` (rôles, grille de mesures, arpèges, conducteur des couches), `moods` (ambiances, Auto selon l'heure), `visual` (visuel abstrait qui suit le son), `main` ; réutilise `synth/` |
 | `player/` | redirection vers Focus music, ambiance Drone (ancienne adresse) |
 | `pads/` | Pad states (prototype) |
 | `score/` | Piano score : `midi` (lecteur MIDI), `piano` (son), `player` (transport, boucle), `roll` (notes qui tombent), `timeline`, `demo`, `main` |

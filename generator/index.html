@@ -22,7 +22,7 @@
 
   <section class="transport">
     <button class="play" id="play" aria-label="Play / Stop">
-      <svg viewBox="0 0 24 24"><path id="play-icon" d="M8 5v14l11-7z"/></svg>
+      <svg viewBox="0 0 24 24"><path class="play-path" d="M8 5v14l11-7z"/></svg>
     </button>
     <div class="transport-side">
       <div class="chord" id="chord">—</div>
@@ -30,6 +30,16 @@
       <label class="row"><span>Volume</span><input type="range" id="volume" min="0" max="100" value="80"></label>
     </div>
   </section>
+
+  <div class="visual" id="visual">
+    <canvas id="visual-canvas" aria-label="An abstract picture moving with the music"></canvas>
+    <button class="v-btn v-play" id="v-play" aria-label="Play / Stop">
+      <svg viewBox="0 0 24 24"><path class="play-path" d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button class="v-btn v-full" id="v-full" aria-label="Full screen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path class="v-full-path" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+  </div>
 
   <section>
     <h2>Mood</h2>
@@ -102,6 +112,7 @@
 <script src="harmony.js"></script>
 <script src="generator.js"></script>
 <script src="moods.js"></script>
+<script src="visual.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

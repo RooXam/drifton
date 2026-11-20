@@ -66,8 +66,9 @@ class Harmony {
   chordName(d) {
     if (this.style === "drone") return { name: NOTE_NAMES[this.pc(d)] + "5", roman: ROMAN[mod(d, 7)] + "5" };
     if (this.style === "sus") {
-      const sixth = this.interval(d, 5) === 9 ? "6" : "(b6)";
-      return { name: NOTE_NAMES[this.pc(d)] + "sus2" + sixth, roman: ROMAN[mod(d, 7)] + "sus" };
+      // C6sus2 (C D G A); with a minor sixth, Csus2(b6).
+      const name = NOTE_NAMES[this.pc(d)] + (this.interval(d, 5) === 9 ? "6sus2" : "sus2(b6)");
+      return { name, roman: ROMAN[mod(d, 7)] + "sus2" };
     }
     const minor = this.interval(d, 2) === 3;
     const seventh = this.interval(d, 6);

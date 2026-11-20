@@ -35,3 +35,46 @@ canvas#roll { height: 220px; }
 
 .moods { flex-wrap: wrap; }
 .row.check span { width: auto; }
+
+/* Visualizer: the picture, with Play and full screen on top */
+.visual {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+}
+.visual canvas { width: 100%; height: 100%; border-radius: 0; background: transparent; }
+.v-btn {
+  position: absolute;
+  bottom: 12px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background: rgb(8 6 16 / 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--fg);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+.v-btn:hover { opacity: 1; }
+.v-btn svg { width: 20px; height: 20px; }
+.v-play svg { fill: currentColor; }
+.v-full { right: 12px; }
+.v-play { left: 12px; display: none; } /* the big Play button is right above, except in full screen */
+.visual.immersive {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+.visual.immersive .v-play { display: flex; }
+.visual.immersive .v-btn { bottom: max(16px, env(safe-area-inset-bottom)); }
+body.no-scroll { overflow: hidden; }
+@media (max-width: 560px) { .visual { aspect-ratio: 1 / 1; } }

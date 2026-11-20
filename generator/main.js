@@ -68,7 +68,7 @@ playBtn.addEventListener("click", async () => {
   else gen.start();
   fx.setActive(gen.running);
   playBtn.classList.toggle("playing", gen.running);
-  $("play-icon").setAttribute("d", gen.running ? STOP_PATH : PLAY_PATH);
+  document.querySelectorAll(".play-path").forEach((p) => p.setAttribute("d", gen.running ? STOP_PATH : PLAY_PATH));
 });
 
 $("volume").value = prefs.volume;
@@ -251,7 +251,35 @@ function updateReadout() {
     : `${keyName}, press play`;
 }
 
+// ---- Visualizer (visual.js), and its full-screen mode ----
+
+const visual = new Visualizer($("visual-canvas"), master.analyser, gen, fx);
+const visualBox = $("visual");
+let wakeLock = null;
+
+$("v-play").addEventListener("click", () => playBtn.click());
+// Full screen is done in CSS (the box covers the window): it works on iPhone too, where
+// pages cannot ask for real full screen. The screen is kept awake meanwhile.
+async function immerse(on) {
+  visualBox.classList.toggle("immersive", on);
+  document.body.classList.toggle("no-scroll", on);
+  $("v-full").setAttribute("aria-label", on ? "Leave full screen" : "Full screen");
+  document.querySelector(".v-full-path").setAttribute("d", on
+    ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5");
+  try {
+    if (on && "wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
+    else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch {}
+}
+$("v-full").addEventListener("click", () => immerse(!visualBox.classList.contains("immersive")));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") immerse(false); });
+
+// Draw the visual only while it is on screen.
+let visualShown = true;
+new IntersectionObserver(([e]) => (visualShown = e.isIntersecting)).observe(visualBox);
+
 function frame() {
+  if (visualShown) visual.draw();
   drawRoll();
   updateReadout();
   requestAnimationFrame(frame);
