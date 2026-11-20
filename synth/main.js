@@ -5,7 +5,7 @@
 // keyboard always act on the selected one; the others keep their sound and any notes
 // left ringing in Hold mode.
 
-const ctx = new AudioContext();
+const ctx = createAudio(); // ../audio.js: works on iPhone too (silent switch, gestures)
 const master = new MasterBus(ctx);
 const instruments = Object.keys(STARTER_PATCHES).map((name) => ({
   name,

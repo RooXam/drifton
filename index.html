@@ -14,45 +14,32 @@
     <p class="intro">Small sound tools that run in your browser: listen, play, learn, make.</p>
   </header>
 
-  <!-- Each illustration is a small inline SVG: flat shapes, rounded ends, the site's palette. -->
+  <!-- Each illustration is a small inline SVG in shades of the one violet. -->
 
   <div class="tool-group">
     <h2 class="group-title">Listen</h2>
-    <nav class="tools">
-      <a class="card" href="generator/index.html">
+    <nav class="tools single">
+      <a class="card wide" href="generator/index.html">
         <div class="art">
           <svg viewBox="0 0 240 120" aria-hidden="true">
             <circle cx="40" cy="26" r="1.6" fill="#e8e6f0" opacity=".5"/>
             <circle cx="92" cy="18" r="1.2" fill="#e8e6f0" opacity=".4"/>
             <circle cx="214" cy="30" r="1.4" fill="#e8e6f0" opacity=".5"/>
-            <circle cx="172" cy="50" r="18" fill="#f2b56d"/>
+            <circle cx="172" cy="50" r="18" fill="#e4ddff"/>
             <path d="M0 80 C40 60 80 60 120 78 S200 96 240 70 V120 H0Z" fill="#5c2a8c"/>
             <path d="M0 92 C50 74 90 80 130 92 S210 104 240 86 V120 H0Z" fill="#8a7fff"/>
             <path d="M0 106 C40 96 100 98 140 106 S210 114 240 102 V120 H0Z" fill="#c4bdff"/>
           </svg>
         </div>
         <h2>Focus music</h2>
-        <p>Endless music composed live, to focus or relax.</p>
-      </a>
-
-      <a class="card" href="player/index.html">
-        <div class="art">
-          <svg viewBox="0 0 240 120" aria-hidden="true">
-            <path d="M16 60 Q42 34 68 60 T120 60 T172 60 T224 60" fill="none" stroke="#5ec4f2" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-            <circle cx="120" cy="60" r="42" fill="none" stroke="#5c2a8c" stroke-width="7"/>
-            <circle cx="120" cy="60" r="28" fill="none" stroke="#8a7fff" stroke-width="7"/>
-            <circle cx="120" cy="60" r="13" fill="#c4bdff"/>
-          </svg>
-        </div>
-        <h2>Drone</h2>
-        <p>A simple generative drone, one tap to start.</p>
+        <p>Endless music composed live, to focus, relax or drift off: moods from a soft arpeggio to a still drone.</p>
       </a>
     </nav>
   </div>
 
   <div class="tool-group">
     <h2 class="group-title">Play &amp; learn</h2>
-    <nav class="tools">
+    <nav class="tools three">
       <a class="card" href="score/index.html">
         <div class="art">
           <svg viewBox="0 0 240 120" aria-hidden="true">
@@ -82,32 +69,70 @@
         <p>Practice from a MIDI file: slow it down, loop a passage.</p>
       </a>
 
-      <div class="card soon">
+      <a class="card" href="songbook/index.html">
+        <div class="art">
+          <svg viewBox="0 0 240 120" aria-hidden="true">
+            <!-- an open songbook: rows of chord chips, and a guitar pick -->
+            <rect x="40" y="16" width="78" height="90" rx="10" fill="#2a2640"/>
+            <rect x="122" y="16" width="78" height="90" rx="10" fill="#2a2640"/>
+            <g fill="#8a7fff"><rect x="50" y="28" width="18" height="12" rx="4"/><rect x="72" y="28" width="14" height="12" rx="4"/><rect x="90" y="28" width="18" height="12" rx="4"/></g>
+            <g fill="#5c2a8c"><rect x="50" y="50" width="22" height="12" rx="4"/><rect x="76" y="50" width="16" height="12" rx="4"/></g>
+            <g fill="#c4bdff"><rect x="50" y="72" width="14" height="12" rx="4"/><rect x="68" y="72" width="20" height="12" rx="4"/><rect x="92" y="72" width="16" height="12" rx="4"/></g>
+            <g fill="#8a7fff"><rect x="132" y="28" width="22" height="12" rx="4"/><rect x="158" y="28" width="16" height="12" rx="4"/></g>
+            <g fill="#c4bdff"><rect x="132" y="50" width="16" height="12" rx="4"/><rect x="152" y="50" width="18" height="12" rx="4"/><rect x="174" y="50" width="16" height="12" rx="4"/></g>
+            <rect x="132" y="72" width="20" height="12" rx="4" fill="#5c2a8c"/>
+            <path d="M176 70 C190 70 198 76 196 86 C194 96 184 104 178 106 C172 104 162 96 160 86 C158 76 164 70 176 70Z" fill="#e4ddff"/>
+          </svg>
+        </div>
+        <h2>Songbook</h2>
+        <p>Songs to play on guitar: the chords of each part, the shapes, play along.</p>
+      </a>
+
+      <a class="card" href="chords/index.html">
         <div class="art">
           <svg viewBox="0 0 240 120" aria-hidden="true">
             <rect x="24" y="28" width="192" height="64" rx="10" fill="#2a2640"/>
-            <g stroke="#8a879c" stroke-width="4" stroke-linecap="round">
+            <g stroke="#8f8aa6" stroke-width="4" stroke-linecap="round">
               <path d="M76 32v56M128 32v56M180 32v56"/>
             </g>
-            <g stroke="#6b6880" stroke-width="1.6">
+            <g stroke="#8f8aa6" stroke-width="1.6">
               <path d="M24 38h192M24 49h192M24 60h192M24 71h192M24 82h192"/>
             </g>
-            <circle cx="102" cy="49" r="7" fill="#f2b56d"/>
-            <circle cx="154" cy="60" r="7" fill="#5ec4f2"/>
+            <circle cx="102" cy="49" r="7" fill="#e4ddff"/>
+            <circle cx="154" cy="60" r="7" fill="#a89cff"/>
             <circle cx="154" cy="71" r="7" fill="#8a7fff"/>
-            <circle cx="50" cy="82" r="7" fill="#7fdcc8"/>
+            <circle cx="50" cy="82" r="7" fill="#c4bdff"/>
           </svg>
         </div>
-        <h2>Chords <span class="tag">Soon</span></h2>
-        <p>Learn and recognise chords on piano and guitar.</p>
-      </div>
+        <h2>Chords</h2>
+        <p>A guessing game to learn guitar chords: strum the shape, ask for hints.</p>
+      </a>
     </nav>
   </div>
 
-  <div class="group-row">
   <div class="tool-group">
     <h2 class="group-title">Make</h2>
     <nav class="tools">
+      <a class="card" href="progressions/index.html">
+        <div class="art">
+          <svg viewBox="0 0 240 120" aria-hidden="true">
+            <!-- four chords: their notes, the bass below, a line leading from one to the next -->
+            <g fill="#2a2640">
+              <rect x="30" y="16" width="36" height="88" rx="10"/><rect x="82" y="16" width="36" height="88" rx="10"/>
+              <rect x="134" y="16" width="36" height="88" rx="10"/><rect x="186" y="16" width="36" height="88" rx="10"/>
+            </g>
+            <path d="M48 34 C66 34 82 44 100 44 S134 28 152 28 S186 40 204 40" fill="none" stroke="#e4ddff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+            <g fill="#c4bdff"><circle cx="48" cy="34" r="6"/><circle cx="100" cy="44" r="6"/><circle cx="152" cy="28" r="6"/><circle cx="204" cy="40" r="6"/></g>
+            <g fill="#8a7fff"><circle cx="48" cy="52" r="6"/><circle cx="100" cy="58" r="6"/><circle cx="152" cy="46" r="6"/><circle cx="204" cy="56" r="6"/>
+              <circle cx="48" cy="66" r="6"/><circle cx="100" cy="72" r="6"/><circle cx="152" cy="62" r="6"/><circle cx="204" cy="70" r="6"/></g>
+            <g fill="#a89cff"><rect x="38" y="86" width="20" height="8" rx="4"/><rect x="90" y="88" width="20" height="8" rx="4"/>
+              <rect x="142" y="84" width="20" height="8" rx="4"/><rect x="194" y="86" width="20" height="8" rx="4"/></g>
+          </svg>
+        </div>
+        <h2>Chord progressions</h2>
+        <p>Progressions typical of a style, found in 680,000 songs. Listen, transpose, export MIDI.</p>
+      </a>
+
       <a class="card" href="synth/index.html">
         <div class="art">
           <svg viewBox="0 0 240 120" aria-hidden="true">
@@ -116,8 +141,8 @@
             </g>
             <g fill="none" stroke-width="5" stroke-linecap="round">
               <path d="M52 60 A20 20 0 1 1 80 32" stroke="#8a7fff"/>
-              <path d="M106 60 A20 20 0 0 1 120 26" stroke="#5ec4f2"/>
-              <path d="M160 60 A20 20 0 1 1 188 60" stroke="#f2b56d"/>
+              <path d="M106 60 A20 20 0 0 1 120 26" stroke="#a89cff"/>
+              <path d="M160 60 A20 20 0 1 1 188 60" stroke="#e4ddff"/>
             </g>
             <g stroke="#e8e6f0" stroke-width="3.5" stroke-linecap="round">
               <path d="M66 46l9-9M120 46v-12M174 46l9 9"/>
@@ -132,14 +157,14 @@
   </div>
 
   <div class="tool-group">
-    <h2 class="group-title">Lab · experiments</h2>
-    <nav class="tools">
-      <a class="card" href="pads/index.html">
+    <h2 class="group-title">Lab</h2>
+    <nav class="tools single">
+      <a class="card wide" href="pads/index.html">
         <div class="art">
           <svg viewBox="0 0 240 120" aria-hidden="true">
             <g style="mix-blend-mode: screen" opacity=".85">
               <circle cx="100" cy="70" r="30" fill="#8a7fff"/>
-              <circle cx="140" cy="70" r="30" fill="#5ec4f2"/>
+              <circle cx="140" cy="70" r="30" fill="#a89cff"/>
               <circle cx="120" cy="42" r="30" fill="#5c2a8c"/>
             </g>
             <g fill="#e8e6f0" opacity=".6">
@@ -153,11 +178,10 @@
       </a>
     </nav>
   </div>
-  </div>
 
   <p class="foot">
     A personal exploration, built step by step.
-    <a href="https://github.com/RooXam/drifton/blob/main/ROADMAP.md">Roadmap →</a>
+    <a href="https://github.com/RooXam/drifton/blob/main/ROADMAP.md">Roadmap</a>
   </p>
 </main>
 </body>

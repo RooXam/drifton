@@ -17,6 +17,7 @@
   <button class="btn" id="open" type="button">Open MIDI file</button>
   <input type="file" id="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden>
   <button class="btn" id="demo" type="button">Demo</button>
+  <select class="btn files" id="files" hidden aria-label="My files"></select>
 </header>
 
 <div class="bar transport">
@@ -59,6 +60,9 @@
   <span class="status" id="status"></span>
 </footer>
 
+<script src="../audio.js"></script>
+
+<script src="../library.js"></script>
 <script src="midi.js"></script>
 <script src="demo.js"></script>
 <script src="piano.js"></script>

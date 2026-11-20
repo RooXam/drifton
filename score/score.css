@@ -95,3 +95,5 @@ canvas.timeline {
 .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .part-name { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .status { color: var(--muted); font-size: 0.8rem; }
+.btn.files { flex: none; width: auto; max-width: 11rem; }
+select.btn[hidden] { display: none; }

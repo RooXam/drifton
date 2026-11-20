@@ -2,16 +2,32 @@
 // defaults in params.js; makePatch fills in the rest.
 
 const STARTER_PATCHES = {
-  Pad: {},
+  // Warm and soft: detuned triangles (much gentler than saws) through a low filter that
+  // barely opens (a filter sweeping wide on every chord sounds harsh), a quiet sine an
+  // octave below for body, slow attack and release, and a slow drift on the cutoff so it
+  // breathes. Not too dark or too much sub: phone speakers play almost nothing below
+  // 300 Hz, and a pad living down there disappears on them.
+  Pad: {
+    "a.wave": "triangle", "a.unison": 5, "a.spread": 12, "a.level": 0.6,
+    "b.wave": "sine", "b.octave": -1, "b.level": 0.3,
+    "noise.level": 0.025,
+    "filter.cutoff": 1000, "filter.res": 0.08, "filter.env": 0.6,
+    "fenv.attack": 3, "fenv.decay": 4, "fenv.sustain": 0.5, "fenv.release": 4,
+    "amp.attack": 2.5, "amp.decay": 2, "amp.sustain": 0.9, "amp.release": 5,
+    "lfo1.rate": 0.08,
+    "mod1.amount": 0.18,
+  },
 
-  // Mono-ish and round: one saw an octave down, a sine sub-octave, filter mostly closed.
+  // Round and soft: a triangle an octave down and a sine two octaves down, a low filter
+  // that barely opens, and an attack of a few tens of milliseconds so the note swells in
+  // instead of clicking (on small speakers you hear the attack, not the low end).
   Bass: {
-    "a.octave": -1, "a.unison": 1, "a.spread": 0, "a.width": 0, "a.level": 0.6,
-    "b.wave": "sine", "b.octave": -2, "b.level": 0.7,
+    "a.wave": "triangle", "a.octave": -1, "a.unison": 1, "a.spread": 0, "a.width": 0, "a.level": 0.55,
+    "b.wave": "sine", "b.octave": -2, "b.level": 0.75,
     "noise.level": 0,
-    "filter.cutoff": 320, "filter.res": 0.25, "filter.env": 1.5,
-    "fenv.attack": 0.01, "fenv.decay": 0.6, "fenv.sustain": 0.2, "fenv.release": 0.4,
-    "amp.attack": 0.01, "amp.decay": 0.5, "amp.sustain": 0.8, "amp.release": 0.5,
+    "filter.cutoff": 300, "filter.res": 0.1, "filter.env": 0.7,
+    "fenv.attack": 0.06, "fenv.decay": 0.9, "fenv.sustain": 0.35, "fenv.release": 0.6,
+    "amp.attack": 0.07, "amp.decay": 0.6, "amp.sustain": 0.85, "amp.release": 0.6,
     "lfo1.rate": 0.1,
     "mod1.amount": 0.1, "mod2.src": "off", "mod3.src": "off",
   },
@@ -28,6 +44,20 @@ const STARTER_PATCHES = {
     "mod1.src": "off",
     "mod2.dst": "pitch", "mod2.amount": 0.04,
     "mod3.dst": "pan", "mod3.amount": 0.5,
+    volume: 0.6,
+  },
+
+  // A soft "felt piano": a sine with a quiet triangle an octave up, struck (instant
+  // attack, no sustain: the note dies away on its own), the filter closing as it fades.
+  Keys: {
+    "a.wave": "sine", "a.octave": 0, "a.unison": 1, "a.spread": 0, "a.width": 0, "a.level": 0.75,
+    "b.wave": "triangle", "b.octave": 1, "b.unison": 1, "b.level": 0.16,
+    "noise.level": 0,
+    "filter.cutoff": 1500, "filter.res": 0.05, "filter.env": 1.6,
+    "fenv.attack": 0.002, "fenv.decay": 0.7, "fenv.sustain": 0, "fenv.release": 0.8,
+    "amp.attack": 0.004, "amp.decay": 2.4, "amp.sustain": 0, "amp.release": 1.4,
+    "mod1.src": "off", "mod3.src": "off",
+    "mod2.dst": "pan", "mod2.amount": 0.25,
     volume: 0.6,
   },
 

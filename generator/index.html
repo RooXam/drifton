@@ -11,12 +11,12 @@
 <body>
 <main class="lab">
   <header>
-    <a href="../index.html" class="back">← Drifton</a> · <a href="../synth/index.html" class="back">Synth</a>
+    <nav class="crumbs"><a href="../index.html" class="back">← Drifton</a><a href="../synth/index.html" class="back">Synth</a></nav>
     <h1>Focus music</h1>
     <p class="intro">
-      Four instruments from the synth: a pad holding the
-      chords, a bass on the roots, sparse bells wandering on the scale, and a texture.
-      Chords change by weighted chance and are voice-led so the changes stay smooth.
+      Endless music composed live, to focus or relax: a pad holding the chords, a bass, a
+      soft piano playing little arpeggios, sparse bells and a texture, in a room with echo.
+      Layers come and go slowly; nothing ever repeats exactly.
     </p>
   </header>
 
@@ -32,6 +32,12 @@
   </section>
 
   <section>
+    <h2>Mood</h2>
+    <div class="seg moods" id="moods"></div>
+    <p class="help" id="mood-help"></p>
+  </section>
+
+  <section>
     <canvas id="roll"></canvas>
     <div class="legend" id="legend"></div>
   </section>
@@ -41,25 +47,47 @@
     <label class="row"><span>Key</span><select id="key"></select></label>
     <label class="row"><span>Mode</span>
       <select id="mode">
-        <option value="lydian">Lydian · floating</option>
-        <option value="ionian">Ionian · major</option>
-        <option value="mixolydian">Mixolydian · warm</option>
-        <option value="dorian" selected>Dorian · soft minor</option>
-        <option value="aeolian">Aeolian · melancholic</option>
-        <option value="phrygian">Phrygian · dark</option>
+        <option value="lydian">Lydian (floating)</option>
+        <option value="ionian">Ionian (major)</option>
+        <option value="mixolydian">Mixolydian (warm)</option>
+        <option value="dorian" selected>Dorian (soft minor)</option>
+        <option value="aeolian">Aeolian (melancholic)</option>
+        <option value="phrygian">Phrygian (dark)</option>
       </select>
     </label>
+    <label class="row"><span>Tempo</span><input type="range" id="bpm" min="50" max="110" value="72"><output id="bpm-out"></output></label>
     <label class="row"><span>Chord length</span><input type="range" id="chord-len" min="6" max="60" value="20"><output id="chord-len-out"></output></label>
-    <p class="help">Key and mode changes apply from the next chord.</p>
+    <p class="help">Key and mode changes apply from the next chord. Chords change at the start of a bar.</p>
   </section>
 
   <section>
     <h2>Instruments</h2>
     <div id="roles"></div>
+    <label class="row"><span>Movement</span><input type="range" id="movement" min="0" max="100" value="45"><output id="movement-out"></output></label>
     <label class="row"><span>Bell density</span><input type="range" id="density" min="0" max="100" value="35"><output id="density-out"></output></label>
-    <p class="help">Edit opens the instrument on the synth page in a new tab: your changes are heard here right away.</p>
+    <label class="row check"><input type="checkbox" id="evolve" checked> <span>Layers come and go (keys, bells, texture fade in and out every few bars)</span></label>
+    <p class="help">Movement: how much the keys and the bass play in rhythm (0 = held chords only).
+      Edit opens the instrument on the synth page in a new tab: your changes are heard here right away.</p>
+  </section>
+
+  <section>
+    <h2>Sound</h2>
+    <label class="row"><span>Space</span><input type="range" id="space" min="0" max="100" value="35"><output id="space-out"></output></label>
+    <label class="row"><span>Echo</span><input type="range" id="echo" min="0" max="100" value="22"><output id="echo-out"></output></label>
+    <label class="row"><span>Warmth</span><input type="range" id="warmth" min="0" max="100" value="55"><output id="warmth-out"></output></label>
+    <label class="row"><span>Tape</span><input type="range" id="tape" min="0" max="100" value="10"><output id="tape-out"></output></label>
+    <label class="row"><span>Pulse</span><input type="range" id="pulse" min="0" max="60" value="18"><output id="pulse-out"></output></label>
+    <p class="help">Space: the room (reverb). Echo: repeats in time with the tempo. Warmth: softer
+      highs and a gentle saturation. Tape: an old cassette, the pitch slowly wobbling, hiss. Pulse: the volume shimmers several times a second, like
+      Brain.fm's focus music (16 Hz for focus, slower for calm); keep it subtle.</p>
+  </section>
+
+  <section>
+    <div class="seg"><button id="reset">Reset all settings</button></div>
+    <p class="help">Back to the defaults: mood, sliders, instrument volumes. Sounds edited on the synth page are reset there.</p>
   </section>
 </main>
+<script src="../audio.js"></script>
 <script src="../synth/util.js"></script>
 <script src="../synth/params.js"></script>
 <script src="../synth/envelope.js"></script>
@@ -67,11 +95,13 @@
 <script src="../synth/osc.js"></script>
 <script src="../synth/voice.js"></script>
 <script src="../synth/synth.js"></script>
+<script src="../synth/effects.js"></script>
 <script src="../synth/patches.js"></script>
 <script src="../synth/storage.js"></script>
 <script src="../synth/scope.js"></script>
 <script src="harmony.js"></script>
 <script src="generator.js"></script>
+<script src="moods.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

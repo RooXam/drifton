@@ -17,6 +17,7 @@ class Voice {
     this.ctx = ctx;
     this.synth = synth;
     this.note = note;
+    this.startTime = t; // may be in the future: notes are scheduled ahead
     this.released = false;
 
     this.filter = ctx.createBiquadFilter();

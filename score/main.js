@@ -1,9 +1,7 @@
 // Wires the page: opening a file, the transport (play, speed, loop), the parts, and the
 // animation that redraws the roll every frame.
 
-const ctx = new AudioContext();
-// iPhone / iPad: play even when the device is in silent mode (Safari 17+).
-try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
+const ctx = createAudio(); // ../audio.js: works on iPhone too (silent switch, gestures)
 
 const sound = new PianoSound(ctx);
 const player = new Player(ctx, sound);
@@ -37,36 +35,68 @@ async function openFile(file) {
     const buffer = await file.arrayBuffer();
     const song = parseMidi(buffer);
     if (!song.notes.length) throw new Error("No notes in this file.");
-    loadSong(song, file.name.replace(/\.midi?$/i, ""));
-    remember(file.name, buffer);
+    const name = file.name.replace(/\.midi?$/i, "");
+    loadSong(song, name);
+    remember(name, buffer);
   } catch (e) {
     setStatus(`Could not read ${file.name}: ${e.message}`);
   }
 }
 
-// Keep the last file in the browser, so the page reopens on it.
-function remember(name, buffer) {
+// Every file opened is kept in my library (../library.js, on this device only), so the
+// page reopens on the last one and the others stay a tap away in "My files".
+async function remember(name, buffer) {
   try {
-    const bytes = new Uint8Array(buffer);
-    if (bytes.length > 1_000_000) return;
-    let bin = "";
-    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    localStorage.setItem(LAST_KEY, JSON.stringify({ name, data: btoa(bin) }));
+    await Library.put({ id: "midi:" + name, kind: "midi", name, data: buffer });
+    Library.persist();
+    fillFiles(name);
   } catch {}
 }
 
-function restore() {
+async function fillFiles(current) {
+  const files = await Library.list("midi");
+  const sel = $("files");
+  sel.hidden = !files.length;
+  sel.innerHTML = `<option value="">My files (${files.length})</option>` +
+    files.map((f) => `<option value="${f.id.replace(/"/g, "&quot;")}">${f.name.replace(/</g, "&lt;")}</option>`).join("");
+  sel.value = current ? "midi:" + current : "";
+}
+
+async function openSaved(id) {
+  const item = await Library.get(id);
+  if (!item) return;
   try {
-    const last = JSON.parse(localStorage.getItem(LAST_KEY));
-    if (!last) return false;
-    const bin = atob(last.data);
-    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-    loadSong(parseMidi(bytes.buffer), last.name.replace(/\.midi?$/i, ""));
-    return true;
-  } catch {
-    return false;
+    loadSong(parseMidi(item.data), item.name);
+    Library.put(item); // now the most recent
+  } catch (e) {
+    setStatus(`Could not read ${item.name}: ${e.message}`);
   }
 }
+
+// Reopen the last file. Older versions kept it in localStorage: move it to the library.
+async function restore() {
+  try {
+    const old = JSON.parse(localStorage.getItem(LAST_KEY));
+    if (old) {
+      const bytes = Uint8Array.from(atob(old.data), (c) => c.charCodeAt(0));
+      await Library.put({ id: "midi:" + old.name.replace(/\.midi?$/i, ""), kind: "midi", name: old.name.replace(/\.midi?$/i, ""), data: bytes.buffer });
+      localStorage.removeItem(LAST_KEY);
+    }
+  } catch {}
+  const files = await Library.list("midi");
+  if (files.length) {
+    try {
+      loadSong(parseMidi(files[0].data), files[0].name);
+      fillFiles(files[0].name);
+      return true;
+    } catch {}
+  }
+  return false;
+}
+
+$("files").addEventListener("change", (e) => {
+  if (e.target.value) openSaved(e.target.value);
+});
 
 $("open").addEventListener("click", () => $("file").click());
 $("file").addEventListener("change", (e) => {
@@ -282,5 +312,5 @@ function frame() {
   requestAnimationFrame(frame);
 }
 
-if (!restore()) loadSong(demoSong(), "Ode to Joy (demo)");
+restore().then((ok) => { if (!ok) loadSong(demoSong(), "Ode to Joy (demo)"); });
 requestAnimationFrame(frame);

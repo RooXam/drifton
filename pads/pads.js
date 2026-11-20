@@ -21,7 +21,7 @@ const LOOP_XFADE = 4;                  // crossfade between loop repetitions (s)
 const LOOKAHEAD = 2;                   // how far ahead we schedule audio (s)
 const TICK_MS = 100;
 
-const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const ctx = createAudio(); // ../audio.js: works on iPhone too (silent switch, gestures)
 
 // ---------- Equal-power fade curves ----------
 const CURVE_N = 128;

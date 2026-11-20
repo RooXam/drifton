@@ -1,0 +1,106 @@
+/* Songbook page: extends ../common.css and ../progressions/progressions.css */
+
+[hidden] { display: none !important; } /* sections are display: flex in common.css */
+
+/* List of songs */
+.songs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.6rem; }
+.song-card {
+  background: var(--card-active); border: 1px solid transparent; border-radius: 14px;
+  padding: 0.8rem 0.9rem; color: var(--fg); text-decoration: none;
+  display: flex; flex-direction: column; gap: 0.25rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.song-card:hover, .song-card:focus-visible { border-color: var(--accent); outline: none; }
+.song-card b { font-size: 0.98rem; }
+.song-card .artist { color: var(--muted); font-size: 0.85rem; }
+.song-card .info { color: var(--muted); font-size: 0.78rem; margin-top: 0.2rem; }
+.song-card .info em { color: var(--accent); font-style: normal; }
+
+/* Song header */
+.song-head { display: flex; flex-direction: column; gap: 0.2rem; }
+.song-head h2 { font-size: 1.25rem; margin-top: 0.3rem; }
+.song-head h2 small { color: var(--muted); font-weight: 400; font-size: 0.95rem; margin-left: 0.4rem; }
+.song-meta { color: var(--muted); font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.song-meta a { color: var(--accent); text-decoration: none; }
+.song-meta b { color: var(--fg); font-weight: 500; }
+
+.now { font-size: 1.6rem; font-weight: 600; min-height: 2rem; }
+.now small { font-size: 0.9rem; color: var(--muted); font-weight: 400; margin-left: 0.5rem; }
+
+canvas#guitar { width: 100%; height: 150px; background: transparent; border-radius: 8px; }
+
+.step {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--card-active); color: var(--fg); border: 1px solid transparent;
+  font: inherit; font-size: 1rem; cursor: pointer;
+}
+.step:hover { border-color: var(--accent); }
+.mini output#semis { width: 2rem; text-align: center; }
+.mini.check { cursor: pointer; }
+.mini select { width: 7.5rem; }
+
+/* Sections and their chords */
+.sections { display: flex; flex-direction: column; gap: 1rem; }
+.part { display: flex; flex-direction: column; gap: 0.45rem; }
+.part-head { display: flex; align-items: center; gap: 0.6rem; }
+.part-head h3 {
+  margin: 0; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.part-head .loop {
+  background: none; border: 1px solid #3a3557; color: var(--muted); border-radius: 999px;
+  font: inherit; font-size: 0.72rem; padding: 0.1rem 0.6rem; cursor: pointer;
+}
+.part-head .loop:hover, .part-head .loop.on { border-color: var(--accent); color: var(--accent); }
+/* The lines of a part follow each other and wrap; a wider gap marks where a line ends */
+.lines { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem 1.1rem; }
+.line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+.chip {
+  min-width: 3rem; padding: 0.3rem 0.55rem; border-radius: 9px;
+  background: var(--card-active); border: 1px solid transparent;
+  display: flex; flex-direction: column; align-items: center; line-height: 1.25;
+  cursor: pointer; transition: border-color 0.12s ease, background 0.12s ease;
+}
+.chip b { font-weight: 600; font-size: 0.95rem; }
+.chip small { color: var(--muted); font-size: 0.72rem; }
+.chip.on { border-color: var(--accent); background: #2b2745; box-shadow: 0 0 20px -8px var(--accent); }
+.repeat { color: var(--accent); font-size: 0.8rem; margin-left: 0.2rem; }
+.row.check { cursor: pointer; }
+.row.check span { width: auto; }
+
+/* Library bar, titles */
+.lib-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; }
+.btn-quiet {
+  background: var(--card-active); color: var(--fg); border: 1px solid transparent; border-radius: 999px;
+  padding: 0.4rem 0.9rem; font: inherit; font-size: 0.85rem; cursor: pointer;
+}
+.btn-quiet:hover { border-color: #3a3557; }
+.btn-quiet.danger { color: #ff9688; }
+.list-title { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
+.song-card .tag { font-size: 0.6rem; vertical-align: 2px; }
+
+/* Editor */
+.ed-fields { display: flex; flex-direction: column; gap: 0.6rem; }
+.ed-fields input, #ed-text {
+  background: var(--bg); color: var(--fg); border: 1px solid #2c2942; border-radius: 10px;
+  padding: 0.5rem 0.7rem; font: inherit;
+}
+.ed-fields input[type=text] { flex: 1; }
+.ed-fields input[type=number] { width: 5rem; }
+#ed-text { width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85rem; line-height: 1.45; resize: vertical; }
+.ed-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+
+/* Lyrics view: each chord above the words it starts */
+.sheet .part { gap: 0.15rem; }
+.sline { display: flex; flex-wrap: wrap; align-items: flex-end; row-gap: 0.3rem; margin-bottom: 0.35rem; }
+.sg { display: inline-flex; flex-direction: column; white-space: pre; }
+.sg .ch {
+  align-self: flex-start; color: var(--accent); font-weight: 600; font-size: 0.9rem;
+  padding: 0 0.25rem; margin-left: -0.25rem; border-radius: 6px; cursor: pointer; line-height: 1.5;
+}
+.sg .ch small { color: var(--muted); font-weight: 400; font-size: 0.7rem; margin-left: 0.25rem; }
+.sg .ch.on { background: var(--accent); color: var(--bg); }
+.sg .ch.on small { color: var(--bg); }
+.sg .ly { font-size: 1.02rem; line-height: 1.5; }
+.sline.only { gap: 0.9rem; }
+.sline.only .ly { display: none; }

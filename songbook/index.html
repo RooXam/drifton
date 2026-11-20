@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<title>Drifton Songbook</title>
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="../progressions/progressions.css">
+<link rel="stylesheet" href="songbook.css">
+</head>
+<body>
+<main class="lab songbook">
+  <header>
+    <a href="../index.html" class="back">← Drifton</a>
+    <h1>Songbook</h1>
+    <p class="intro" id="intro">
+      Songs to play on guitar: the chords of each part, the shapes, the roman numerals to
+      understand the progression. Press play to follow the chords along.
+    </p>
+  </header>
+
+  <!-- List of songs -->
+  <section id="list-view">
+    <div class="lib-bar">
+      <button class="action" id="add-song">+ Add a song</button>
+      <button class="btn-quiet" id="export" title="Save your songs and lyrics to a file (backup, other device)">Export my library</button>
+      <button class="btn-quiet" id="import">Import</button>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+      <span class="status" id="lib-status"></span>
+    </div>
+    <h2 class="list-title" id="my-title" hidden>My songs</h2>
+    <div class="songs" id="my-songs"></div>
+    <h2 class="list-title">Songs</h2>
+    <div class="songs" id="songs"></div>
+    <p class="help">Your songs and lyrics stay on this device. Export them to keep a copy or to
+      open them on another device (Import). On iPhone, add the site to your home screen so
+      Safari keeps them.</p>
+  </section>
+
+  <!-- Paste a song, or the lyrics of a song -->
+  <section id="editor" hidden>
+    <h2 id="editor-title">Add a song</h2>
+    <div id="ed-fields" class="ed-fields">
+      <label class="row"><span>Title</span><input type="text" id="ed-title" autocomplete="off"></label>
+      <label class="row"><span>Artist</span><input type="text" id="ed-artist" autocomplete="off"></label>
+      <label class="row"><span>Capo</span><input type="number" id="ed-capo" min="0" max="12" value="0"></label>
+    </div>
+    <textarea id="ed-text" rows="16" spellcheck="false" placeholder="[Verse 1]
+Am          C
+The words of the song under the chords…
+
+or: [Am]The words with [C]chords inside"></textarea>
+    <p class="help">Copy the song from a chord site (the chords above the words, or written like
+      [Am] inside the words) and paste it here. It is kept on this device only, never published.</p>
+    <div class="ed-actions">
+      <button class="action" id="ed-save">Save</button>
+      <button class="btn-quiet" id="ed-cancel">Cancel</button>
+      <button class="btn-quiet danger" id="ed-delete">Remove</button>
+      <span class="status" id="ed-status"></span>
+    </div>
+  </section>
+
+  <!-- One song -->
+  <div id="song-view" hidden>
+    <section class="player">
+      <div class="song-head">
+        <a href="#" class="back">← All songs</a>
+        <h2 id="song-title"></h2>
+        <div class="song-meta" id="song-meta"></div>
+      </div>
+      <div class="transport">
+        <button class="play" id="play" aria-label="Play / Stop">
+          <svg viewBox="0 0 24 24"><path id="play-icon" d="M8 5v14l11-7z"/></svg>
+        </button>
+        <div class="transport-side">
+          <div class="now" id="now">—</div>
+          <div class="status" id="status"></div>
+        </div>
+      </div>
+      <canvas id="guitar"></canvas>
+      <div class="player-bar">
+        <div class="mini"><span>Transpose</span>
+          <button class="step" id="down" aria-label="Down a semitone">−</button>
+          <output id="semis">0</output>
+          <button class="step" id="up" aria-label="Up a semitone">+</button>
+        </div>
+        <label class="mini"><span>Key</span><select id="key"></select></label>
+        <label class="mini check"><input type="checkbox" id="numerals"> <span>Numerals</span></label>
+      </div>
+      <div class="player-bar">
+        <div class="seg" id="view-switch" hidden>
+          <button data-v="lyrics">With lyrics</button><button data-v="chords">Chords only</button>
+        </div>
+        <button class="btn-quiet" id="edit-lyrics">Add lyrics</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="sections" id="sections"></div>
+    </section>
+
+    <section>
+      <h2>Playing along</h2>
+      <label class="row"><span>Tempo</span><input type="range" id="bpm" min="40" max="160" value="80"><output id="bpm-out"></output></label>
+      <div class="row"><span>Each chord</span>
+        <div class="seg" id="beats"><button data-v="2">2 beats</button><button data-v="4">4 beats</button></div>
+      </div>
+      <div class="row"><span>Rhythm</span>
+        <div class="seg" id="rhythm">
+          <button data-v="held">Held</button><button data-v="pulse">Pulse</button><button data-v="push">Push</button><button data-v="arp">Arpeggio</button>
+        </div>
+      </div>
+      <div class="row"><span>Sound</span>
+        <div class="seg" id="sound"><button data-v="piano">Piano</button><button data-v="pad">Synth pad</button></div>
+      </div>
+      <label class="row"><span>Volume</span><input type="range" id="volume" min="0" max="100" value="80"></label>
+      <label class="row check"><input type="checkbox" id="follow" checked> <span>Scroll to the chord playing</span></label>
+      <p class="help">The chord sheets have no timing: each chord lasts the same, so this is to
+        practise the changes, not to play along with the record. You hear the shapes shown, with
+        the capo and the tuning.</p>
+    </section>
+  </div>
+
+  <p class="foot">
+    Built-in songs: chords from community versions on Ultimate Guitar (link on each song).
+    Their lyrics are not included (copyrighted): add them yourself, they stay on your device.
+  </p>
+</main>
+<script src="../audio.js"></script>
+<script src="../synth/util.js"></script>
+<script src="../synth/params.js"></script>
+<script src="../synth/envelope.js"></script>
+<script src="../synth/lfo.js"></script>
+<script src="../synth/osc.js"></script>
+<script src="../synth/voice.js"></script>
+<script src="../synth/synth.js"></script>
+<script src="../synth/patches.js"></script>
+<script src="../synth/storage.js"></script>
+<script src="../score/piano.js"></script>
+<script src="../progressions/theory.js"></script>
+<script src="../progressions/sound.js"></script>
+<script src="../progressions/player.js"></script>
+<script src="../progressions/guitar.js"></script>
+<script src="../library.js"></script>
+<script src="songs.js"></script>
+<script src="chordsym.js"></script>
+<script src="sheet.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

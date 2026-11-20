@@ -2,3 +2,7 @@
 .venv/
 .idea/
 .DS_Store
+
+# Big datasets downloaded by the Python tools (see tools/progressions/README.md)
+tools/data/
+__pycache__/

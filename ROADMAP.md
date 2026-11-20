@@ -1,200 +1,82 @@
-# Drifton — vision, décisions et étapes
+# Drifton — fonctionnalités
 
-Document de référence pour reprendre le projet (ou une session Claude) avec tout le
-contexte. À mettre à jour à chaque étape terminée ou décision prise.
+Ce que fait chaque outil et ce qui est prévu. Site : https://rooxam.github.io/drifton/
 
-## Vision
+## Listen
 
-Drifton est un générateur de **musique fonctionnelle** (focus, relax, sommeil) qui tourne
-dans le navigateur, inspiré d'**Endel** et **Brain.fm**.
+### Focus music (`generator/`)
+Musique fonctionnelle composée en direct pour se concentrer ou se détendre.
+- [x] Cinq instruments du synthé joués par des règles : nappe, basse, piano doux en arpèges (Keys), cloches, texture.
+- [x] Harmonie modale (tonalité, mode), accords enchaînés au hasard pondéré et liés en douceur (voice leading), changements calés sur les mesures, tempo réglable.
+- [x] Mouvement réglable : arpèges et basse en rythme, ou accords tenus.
+- [x] Effets : réverbe, écho calé sur le tempo, chaleur (saturation douce, aigus adoucis), bande (hauteur qui ondule, souffle), pulsation (modulation d'amplitude, 16 Hz pour la concentration).
+- [x] Ambiances : Deep focus, Flow, Calm, Night, Hazy (bande usée, accords sus, riff répété ; « Music has the right to drift »), Drone (un accord ouvert tenu, sans rythme ; remplace l'ancien outil Drone), et Auto qui suit l'heure de la journée ; réglages gardés d'une visite à l'autre.
+- [x] Les couches (piano, cloches, texture) entrent et sortent en fondu toutes les quelques mesures.
+- [x] Sons réglables sur la page Synth, repris en direct.
+- [ ] Ses propres sons : notes isolées et textures (enregistrées dans un logiciel de musique) jouées par le générateur, dans le style d'Endel.
+- [ ] Évolution sur une session : dérive lente des paramètres, montée / plateau / descente.
+- [ ] Jouer une progression choisie dans Progressions.
+- [ ] Apprendre ses goûts : 👍 / 👎 ou « passer », réglages préférés renforcés ; remarques écrites (« trop brillant ») traduites en réglages.
+- [ ] Profils focus / détente / sommeil.
 
-Objectif lointain : un **flux musical infini qui s'adapte à l'utilisateur**. La musique est
-générée par des règles, l'utilisateur donne des 👍/👎 (et des précisions : « trop brillant »,
-« trop chargé »…), et le système apprend ce qu'il aime.
+## Play & learn
 
-Principes de la musique fonctionnelle à respecter :
-- **Faible saillance** : assez de variation pour ne pas lasser, jamais assez pour attirer l'attention.
-- **Arc de session** : montée, plateau, descente (ex. 5 / 25 / 5 min pour un focus de 35 min).
-- **Modulation d'amplitude** façon Brain.fm (~16 Hz pour le focus, plus lent pour la détente).
-- **Jamais de répétition à l'identique** (boucles de longueurs premières entre elles, dérive aléatoire lente).
+### Piano score (`score/`)
+S'entraîner au piano à partir d'un fichier MIDI, pensé pour l'iPad.
+- [x] Notes qui tombent vers un clavier, couleur par main ou piste, touches qui s'allument, numéros de mesure.
+- [x] Vitesse 20–150 %, boucle sur des mesures, voir / entendre chaque piste, noms des notes.
+- [x] Tous les fichiers ouverts gardés sur l'appareil (« My files »).
+- [ ] Détection au micro des notes jouées, et mode « attendre la bonne note ».
+- [ ] Clavier MIDI branché (ordinateur), métronome, décompte, zoom, 88 touches, vue partition, vue guitare.
 
-## Positionnement
+### Songbook (`songbook/`)
+Des morceaux à jouer à la guitare.
+- [x] Morceaux intégrés : accords par partie, capo, accordage, grilles d'accords, chiffres romains, tonalité, transposition.
+- [x] Jouer en suivant : tout le morceau ou une partie en boucle ; l'accord joué s'allume, la page défile.
+- [x] Ses propres morceaux et paroles, collés depuis un site d'accords : gardés sur l'appareil seulement, vue avec chaque accord au-dessus du bon mot, export / import.
+- [ ] Arrangements personnels : positions exactes, durée de chaque accord dans la mesure, rythme de grattage, tempo réel.
+- [ ] Défilement continu à vitesse réglable, plein écran.
+- [ ] Toucher un accord ouvre sa fiche dans Chords.
+- [ ] Importer un morceau depuis la page d'un site d'accords en un geste (raccourci iPhone, favori sur ordinateur).
 
-Drifton est une **collection de petits outils autour du son**, pas une application unique :
-écouter (musique fonctionnelle), jouer et apprendre (piano, accords), fabriquer (synthé),
-plus un coin « Lab » pour les expériences. La cohérence vient du moteur commun (le synthé
-maison), du design et de la simplicité, pas d'un public unique. Chaque outil a sa propre
-adresse pour être partagé seul.
+### Chords (`chords/`)
+Un jeu pour apprendre les accords de guitare.
+- [x] Une position s'affiche, on choisit son nom parmi 4 ; grille jouable au doigt (toucher une corde, glisser pour gratter), son de corde pincée.
+- [x] Indices un par un : cordes à vide, notes, fondamentale, type d'accord.
+- [x] Mode à l'oreille, familles d'accords au choix, score, série, record.
+- [x] À la réponse : chaque note et son rôle (tonique, tierce, quinte, septième…) sous sa corde.
+- [ ] Mode progression : reconnaître les accords quand ils s'enchaînent.
+- [ ] Trouver la position : le nom est donné, on pose les doigts.
+- [ ] Les accords de mes morceaux (depuis le Songbook).
+- [ ] Explorer : n'importe quelle fondamentale et type, sur manche et clavier ; version piano du jeu.
 
-- Objectif personnel d'abord : explorer des idées. Si un outil devient utile, viser une
-  publication publique avec un usage **simple, sans inscription, qui marche en local**.
-- Pas de promesse affichée (« gratuit », « sans compte », « aucune donnée ») : un serveur
-  (ML) ou des fonctions premium avec compte restent possibles plus tard.
-- Pistes notées pour plus tard :
-  - **PWA** (manifest + service worker) : installable sur l'écran d'accueil de l'iPad,
-    fonctionne hors ligne ;
-  - **statistiques d'usage sans cookies** ni données perso (GoatCounter, Cloudflare Web
-    Analytics) pour savoir quels outils servent ;
-  - **dons** (Ko-fi, GitHub Sponsors, Liberapay) ; éventuellement une fonction payante par
-    clé de licence gardée dans le navigateur, seulement si l'usage le justifie.
+## Make
 
-## Décisions prises
+### Chord progressions (`progressions/`)
+Des progressions typiques d'un style, trouvées dans 680 000 morceaux.
+- [x] 17 styles, ~410 progressions ; écouter (piano ou pad du synthé), tonique, tempo, rythmes, version simple ou « comme dans le style ».
+- [x] Vues piano, guitare (positions jouables) et Push (grille 8×8).
+- [x] Export MIDI (piste accords + piste basse), morceaux d'exemple.
+- [ ] Envoyer à Focus music, voicings au choix, favoris, filtre par longueur, mode « In Key » du Push.
+- [ ] Analyser les accords de ses propres fichiers MIDI (tonalité, mode, chiffres romains) et les ajouter à sa bibliothèque.
 
-| Sujet | Décision | Pourquoi |
-|---|---|---|
-| Hébergement | GitHub Pages, fichiers statiques | simple, gratuit ; pas de serveur pour l'instant |
-| Dépendances | zéro (Web Audio natif) | apprendre comment marchent les briques ; Tone.js reste une référence à lire, pas une dépendance |
-| Lancement | doit marcher en double-cliquant le HTML (`file://`) | donc pas de modules ES ni de `fetch`, des `<script>` classiques chargés dans l'ordre |
-| Langage | **JS** pour le moteur temps réel et l'UI ; **Python** pour l'atelier hors ligne (prototypes DSP, analyse, entraînement ML) | Python ne peut pas faire d'audio temps réel dans le navigateur ; un modèle entraîné en Python s'exporte vers le web (ONNX Runtime Web / TF.js) |
-| Source du son | **synthé maison dans le navigateur** joué par un générateur à base de règles, plutôt que des fichiers audio exportés d'Ableton | un sample est figé ; un synthé garde tous ses paramètres vivants, donc pilotables par le conducteur et par l'apprentissage |
-| Wavetables Serum | abandonné | en ambient, le caractère vient surtout du mouvement, des effets, de l'unisson et du filtre, pas de la forme d'onde |
-| Samples | en complément seulement (textures, matière granulaire) | utile pour ce qu'un synthé ne sait pas faire |
-| ML | plus tard ; d'abord règles + apprentissage simple des préférences (bandit) ; un LLM pour interpréter le feedback écrit (étape 7b), en restant dans le gratuit | la génération audio par ML (MusicGen…) est trop lourde et peu contrôlable pour du temps réel navigateur |
-| Plan B si le synthé maison plafonne | RNBO (Max) ou Faust, compilés pour le web | le générateur ne change pas |
-| Façon de travailler | Claude construit les briques, on les décortique ensemble | l'utilisateur débute en JS, connaît Python, compose dans Ableton (Serum, Massive) |
+Données : [Chordonomicon](https://huggingface.co/datasets/ailsntua/Chordonomicon) (CC BY-NC 4.0), analysées par les scripts de `tools/progressions/`.
 
-## Architecture visée
+### Synth (`synth/`)
+- [x] Voix : 2 oscillateurs avec unisson, bruit, filtre, enveloppes, polyphonie, clavier, oscilloscope et spectre.
+- [x] Modulation : 2 LFO (dont Drift et S&H), matrice de modulation.
+- [x] Sons sauvegardés et partagés avec Focus music, export / import.
+- [x] Effets partagés (`effects.js`) : réverbe, écho, chaleur, bande, pulsation (utilisés par Focus music).
+- [ ] Effets réglables par instrument sur la page Synth, chorus.
+- [x] Cinquième instrument : Keys (piano doux).
 
-```
-générateur (règles : gamme, accords, motifs, densité)
-      │ notes
-      ▼
-synthé (oscillateurs → filtre → enveloppes → effets)   ◄── conducteur (fait dériver
-      │                                                     les paramètres musicaux
-      ▼                                                     et sonores, arc de session)
-sortie                                                            ▲
-                                                                  │
-                                    préférences apprises ◄── 👍/👎 + « pourquoi ? »
-```
+## Lab
 
-La musique est décrite par un vecteur de paramètres (brillance, densité, harmonie,
-mouvement, texture, pulsation, registre, patch…). Chaque feedback est enregistré avec la
-valeur de ces paramètres au moment du clic.
+### Pad states (`pads/`)
+- [x] Prototype : fondu entre trois états d'une nappe audio, conducteur, couche granulaire.
 
-## Ce qui existe
-
-| Chemin | Contenu |
-|---|---|
-| `index.html` | accueil : outils rangés par intention (Listen : Focus music, Drone · Play & learn : Piano score, Chords bientôt · Make : Synth · Lab : Pad states), une illustration SVG par outil |
-| `common.css` | styles partagés (accueil, synth, generator, pads) |
-| `player/` | v1, le « Drone player » d'origine : drone génératif simple, presets Focus / Relax / Deep |
-| `pads/` | prototype « nappe en 3 états » : crossfade d'exports audio piloté par un conducteur, couche granulaire, modulation d'amplitude. Exploration, a mené aux décisions ci-dessus |
-| `synth/` | synthé maison, construit brique par brique (voir étapes) |
-| `generator/` | générateur : 4 instruments du synthé joués par des règles. `harmony.js` (modes, accords par empilement de tierces, chaîne de Markov, voice leading), `generator.js` (rôles pad / basse / cloches / texture, ordonnanceur à anticipation), `main.js` (page, piano roll). Réutilise les fichiers de `synth/` |
-| `score/` | lecteur de partition MIDI pour s'entraîner au piano (v1, voir « Autres axes ») |
-
-Organisation de `synth/` (un fichier = une brique, ordre de chargement dans `index.html`) :
-
-| Fichier | Rôle |
-|---|---|
-| `util.js` | helpers : note MIDI → fréquence, changement de paramètre sans clic |
-| `params.js` | liste de tous les paramètres (plage, défaut, affichage) ; l'UI est générée depuis cette liste ; un patch = `{ clé: valeur }` |
-| `envelope.js` | enveloppe ADSR appliquée à n'importe quel AudioParam |
-| `lfo.js` | LFO : formes classiques + Drift (aléatoire lisse, ne se répète jamais) + S&H |
-| `osc.js` | couche d'oscillateur avec unisson (désaccord + stéréo, phase aléatoire) |
-| `voice.js` | une note : 2 oscillateurs + bruit → filtre → ampli → trémolo → pan, 2 enveloppes, branchements de la matrice de modulation |
-| `synth.js` | `Synth` = un instrument (patch, 8 voix, LFO, volume), instanciable plusieurs fois ; notes jouables maintenant ou programmées à un temps `t` ; `MasterBus` commun (limiteur, analyseur) ; buffers de bruit |
-| `storage.js` | sauvegarde des sons dans le navigateur, partagée entre les pages ; nettoyage des valeurs importées |
-| `patches.js` | sons de départ des 4 instruments (Pad, Bass, Bells, Texture), en différences par rapport aux défauts |
-| `keyboard.js` | clavier d'ordinateur (disposition Ableton, positions physiques) + clavier à l'écran, mode Hold |
-| `scope.js` | oscilloscope, spectre, dessin des enveloppes |
-| `main.js` | assemble le tout : 4 instruments avec onglets (le clavier et les contrôles agissent sur l'instrument sélectionné), construit les contrôles |
-
-## Étapes
-
-### Synthé (`synth/`)
-- [x] **1. La voix** : 2 oscillateurs (sinus, triangle, dent de scie, carré) avec unisson, filtre (LP/HP/BP/notch, résonance), enveloppe de filtre, enveloppe d'ampli, polyphonie, clavier, oscilloscope et spectre.
-- [x] **2. La modulation** : 2 LFO (sinus, tri, scie, carré, Drift, S&H), matrice de 4 slots (cutoff, pitch, detune d'unisson, volume, pan), source de bruit (blanc, rose, brun). Synth instanciable plusieurs fois + notes programmées dans le temps (prépare la génération).
-- [ ] **3. Les effets**, un fichier chacun : saturation (WaveShaper), chorus (delay court modulé), delay (avec feedback), réverbe (convolution puis réseau de delays type Freeverb). Éventuellement phaser.
-- [x] **4. Les patchs** : sauvegarde automatique de chaque instrument dans le navigateur (`localStorage`, `synth/storage.js`), lue par le générateur au démarrage et en direct si la page synthé est ouverte dans un autre onglet (événement `storage`) ; Reset = retour au son de départ ; export / import d'un son en fichier JSON (valeurs nettoyées et bornées) ; boutons « Edit » dans le générateur qui ouvrent l'instrument sur la page synthé (`synth/index.html#Bells`).
-
-### Musique
-- [x] **5. Générateur** (première version) : plusieurs instruments (`Synth`) en parallèle, chacun avec un rôle (nappe, basse, cloches/notes éparses, texture). Un état harmonique commun (gamme, accord courant, enchaînements par chaîne de Markov) ; chaque rôle choisit ses notes dedans selon ses règles (densité, registre, probabilité) ; un ordonnanceur à anticipation programme les `noteOn/noteOff` à des temps précis.
-- [ ] **6. Conducteur** : dérive lente de tous les paramètres, arc de session, modulation d'amplitude (reprendre les idées de `pads/`).
-
-### Adaptation
-- [ ] **7. Feedback** : 👍/👎 + boutons « pourquoi ? », enregistrement des paramètres au moment du clic (localStorage), vue « ce que Drifton a appris ».
-- [ ] **7b. Feedback en langage naturel** : l'utilisateur écrit ce qu'il aime ou non (« trop brillant », « ça manque de vie », « trop triste »). Un LLM reçoit la phrase + l'état actuel des paramètres + la liste de ce qu'il peut modifier, et répond en JSON imposé par un schéma : des ajustements bornés (plages autorisées, petits pas) + des étiquettes (`trop_brillant`, `trop_chargé`…). Effet immédiat sur la musique ; les étiquettes nourrissent l'apprentissage (étape 8). Peut aussi servir à démarrer une session (« musique pour coder tard le soir »). 👍/👎 restent pour le réflexe rapide, le texte est optionnel (plus tard : dictée vocale). Vient après le conducteur (il faut des paramètres qui bougent).
-  - **Contrainte : rester gratuit.** Pistes, de la plus simple à la plus lourde :
-    1. un petit modèle qui tourne **dans le navigateur** (WebGPU : WebLLM, transformers.js…) : gratuit, aucun serveur, compatible GitHub Pages ; un modèle de 1 à 3 milliards de paramètres suffit pour transformer une phrase courte en JSON ; inconvénient : un téléchargement de quelques centaines de Mo à quelques Go la première fois ;
-    2. un **LLM local** (Ollama…) sur une machine à soi, si le projet est hébergé ailleurs un jour ;
-    3. une **API payante en usage très limité** (quelques centimes par mois), avec la clé de l'utilisateur stockée dans son navigateur, ou derrière un relais gratuit (Cloudflare Worker) qui garde la clé.
-- [ ] **8. Apprentissage** : le conducteur passe plus de temps dans les zones aimées, tout en continuant à explorer (bandit / échantillonnage de Thompson).
-- [ ] **9. Signaux implicites et contextes** : sauts, durée d'écoute, changements de volume ; profils focus / relax / sommeil ; heure de la journée.
-
-### Plus tard
-- [ ] Faire converger les pistes en une expérience Drifton unique (le générateur + conducteur + feedback, avec l'interface simple du player).
-- [ ] Atelier Python (`tools/` ou `notebooks/`) : prototyper chaque effet en numpy pour le comprendre, puis le porter en JS.
-- [ ] Textures et samples personnels (export Ableton) en couche granulaire.
-- [ ] Vrai modèle de préférences, éventuellement serveur pour agréger plusieurs utilisateurs.
-
-## Autres axes (apprentissage musical)
-
-Pistes à côté de la musique fonctionnelle, qui réutilisent les mêmes briques (synthé pour
-le son, `generator/harmony.js` pour la théorie des accords). Chacune serait une case de
-la page d'accueil.
-
-### Accords piano / guitare (`chords/`)
-- **Explorer** : choisir une fondamentale et un type d'accord (majeur, mineur, 7, maj7, m7,
-  sus2, sus4, dim, aug, 9…), le voir sur un clavier et sur un manche de guitare (positions /
-  doigtés), l'entendre (plaqué ou arpégé), voir le nom des notes et les intervalles.
-- **S'entraîner** :
-  - *jouer l'accord demandé* : on clique les notes, ou on les joue sur un vrai clavier
-    branché en USB (Web MIDI API), et on vérifie ;
-  - *reconnaître à l'oreille* : l'accord est joué, on devine son type (quiz, score,
-    difficulté progressive : d'abord majeur / mineur, puis septièmes, renversements…) ;
-  - *reconnaître sur le clavier ou le manche* : une position s'affiche, on donne son nom.
-- Guitare : accordage standard d'abord, une base de doigtés courants + calcul des
-  positions possibles.
-
-### Lecteur de partition MIDI (`score/`)
-Usage visé : s'entraîner au piano sur iPad (Safari).
-
-- [x] **v1** : ouvrir un `.mid` (bouton ou glisser-déposer), notes qui tombent vers un
-  clavier (couleur par piste / main, touches qui s'allument, numéros de mesure), vitesse
-  20–150 %, boucle Start / End calée sur les mesures, voir / entendre chaque piste
-  séparément, noms des notes, glisser la vue pour avancer / reculer, toucher = lecture /
-  pause, morceau de démo, le dernier fichier est gardé dans le navigateur.
-  | Fichier | Rôle |
-  |---|---|
-  | `midi.js` | lecteur de fichiers MIDI maison : en-tête, pistes, running status, tempo (changements compris), mesures, pédale de sustain, batterie ignorée → `song` (notes en secondes, parties, barres de mesure) |
-  | `piano.js` | son léger type piano / clavier (sinus + dent de scie filtrée qui s'assombrit), 48 voix max, limiteur |
-  | `player.js` | transport : position, programmation à l'avance sur l'horloge audio, vitesse, boucle sans trou |
-  | `roll.js` | vue notes qui tombent + clavier (canvas) |
-  | `timeline.js` | barre du morceau entier, toucher pour se déplacer |
-  | `demo.js` | « Ode à la joie » (domaine public) pour essayer sans fichier |
-  | `main.js` | page : fichiers, boutons, boucle, raccourcis (Espace, ← →, A / B / L) |
-- [ ] **v2 : détection au micro** + mode « attendre que je joue la bonne note ». Safari
-  sur iPad ne gère pas Web MIDI : le micro est donc la voie principale. Idée : on sait
-  déjà quelles notes sont attendues, il suffit de vérifier si elles sonnent (énergie aux
-  fréquences attendues et à leurs harmoniques dans le spectre), plus simple que de
-  reconnaître n'importe quel accord. Une note seule : détection de hauteur classique
-  (autocorrélation / YIN). Accords libres : plus dur (modèle ML type « basic-pitch »).
-  Web MIDI en plus pour un clavier branché sur ordinateur (Chrome).
-- [ ] Plus tard : une main à la fois avec l'autre jouée par l'ordinateur (déjà possible via
-  « Hear »), séparer les mains quand le fichier n'a qu'une piste, métronome, décompte,
-  zoom, plage de 88 touches, vue partition classique.
-- [ ] **Vue guitare** : notes placées sur le manche / tablature qui défile.
-- Design original (pas de copie d'un logiciel existant).
-
-## En ligne
-
-GitHub Pages publie la branche `main` (racine) : https://rooxam.github.io/drifton/ (page d'accueil), puis `/generator/`, `/synth/`, `/player/`, `/pads/`, `/score/`.
-
-## Journal
-
-- **2026-11-14** — Positionnement : Drifton devient une collection de petits outils autour du son. Accueil refait, rangé par intention, avec des illustrations SVG ; le générateur s'affiche « Focus music ». Notés pour plus tard : PWA, statistiques sans cookies, dons. Lecteur piano : main gauche en pourpre foncé, plus sombre que la droite (graves).
-
-- **2026-11-14** — Lecteur de partition MIDI piano, v1 (`score/`) : lecteur de fichiers MIDI maison, notes qui tombent, vitesse, boucle sur les mesures, mains séparées. Pensé pour l'iPad. v2 notée : détection des notes au micro.
-
-- **2026-11-14** — Deux nouveaux axes notés : entraînement aux accords piano / guitare, et lecteur de partition MIDI qui défile (piano et guitare). La roadmap reste publique pour l'instant.
-
-- **2026-11-14** — Étape 4 : les sons réglés sur le synthé sont enregistrés et joués par le générateur.
-
-- **2026-11-14** — Idée ajoutée : feedback en langage naturel interprété par un LLM (étape 7b), avec la contrainte de rester gratuit (modèle dans le navigateur ou LLM local en priorité).
-
-- **2026-11-14** — Réorganisation : tout le projet est Drifton ; la page d'accueil donne accès aux 4 parties au même niveau (le player d'origine passe dans `player/`, le dossier `lab/` disparaît).
-
-- **2026-11-14** — Prototype `lab/` (nappe en 3 états). Discussion de direction → choix du synthé maison + générateur + apprentissage par feedback. Étapes 1 et 2 du synthé faites (voix, puis LFO / bruit / matrice de modulation, multi-instances), onglets pour 4 instruments, puis première version du générateur (étape 5).
-
-Idées notées pour le générateur : pas encore d'effets, donc le rendu est sec ; le conducteur (étape 6) fera varier densité, longueur d'accords, brillance, mode au fil de la session.
+## Partout
+- [x] Fonctionne sur iPhone / iPad (son malgré le bouton silencieux).
+- [x] Bibliothèque sur l'appareil (morceaux, paroles, MIDI), export / import.
+- [ ] Application installable sur l'écran d'accueil, utilisable hors ligne.
+- [ ] Synchronisation de la bibliothèque entre appareils.

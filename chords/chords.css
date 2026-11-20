@@ -1,0 +1,53 @@
+/* Chords game: extends ../common.css */
+
+:root { --c-bass: #5ec4f2; --good: #7fdcc8; --bad: #ff9688; }
+
+.game { align-items: center; text-align: center; }
+.scorebar { display: flex; gap: 1.4rem; color: var(--muted); font-size: 0.85rem; }
+.scorebar b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.question { font-size: 1.1rem; min-height: 1.6rem; }
+.question b { color: var(--accent); }
+.question .formula { display: block; font-size: 0.92rem; color: var(--fg); margin-top: 0.3rem; }
+.question .formula small { color: var(--muted); font-size: 0.8rem; }
+
+/* The chart you can play: touch must not scroll the page while strumming */
+canvas#neck {
+  width: 100%; max-width: 380px; height: 400px;
+  background: transparent; touch-action: none; cursor: pointer;
+}
+
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.btn-round {
+  background: var(--card-active); color: var(--fg); border: 1px solid transparent; border-radius: 999px;
+  padding: 0.5rem 1rem; min-height: 40px; font: inherit; font-size: 0.88rem; cursor: pointer;
+  touch-action: manipulation;
+}
+.btn-round:hover:not(:disabled) { border-color: var(--accent); }
+.btn-round:disabled { opacity: 0.4; cursor: default; }
+
+.hints { margin: 0; padding: 0 0 0 1.2rem; text-align: left; align-self: stretch; color: var(--fg); font-size: 0.9rem; line-height: 1.5; }
+.hints:empty { display: none; }
+.hints li::marker { color: var(--accent); }
+
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; width: 100%; max-width: 420px; }
+.choice {
+  background: var(--card-active); color: var(--fg); border: 1px solid #2f2b45; border-radius: 14px;
+  padding: 0.9rem; font: inherit; font-size: 1.25rem; font-weight: 600; cursor: pointer;
+  touch-action: manipulation; transition: border-color 0.15s ease, background 0.15s ease;
+}
+.choice:hover:not(:disabled) { border-color: var(--accent); }
+.choice.right { border-color: var(--good); color: var(--good); background: #1c2b2d; }
+.choice.wrong { border-color: var(--bad); color: var(--bad); opacity: 0.7; animation: shake 0.3s; }
+.choice:disabled { cursor: default; }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+.next { font-size: 1rem; padding: 0.6rem 1.4rem; }
+.action {
+  background: var(--card-active); color: var(--accent); border: 1px solid var(--accent); border-radius: 999px;
+  font: inherit; cursor: pointer;
+}
+[hidden] { display: none !important; }
+
+.families { align-items: flex-start; }
+#families { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; color: var(--fg); }
+.fam { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }

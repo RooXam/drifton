@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<title>Drifton Chords</title>
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="chords.css">
+</head>
+<body>
+<main class="lab chords-page">
+  <header>
+    <a href="../index.html" class="back">← Drifton</a>
+    <h1>Chords</h1>
+    <p class="intro">
+      A guessing game to learn guitar chords. Touch a string to hear it, slide across the
+      strings to strum, ask for a hint when you're stuck.
+    </p>
+  </header>
+
+  <section class="game">
+    <div class="scorebar">
+      <span>Score <b id="score">0</b></span>
+      <span>Streak <b id="streak">0</b></span>
+      <span>Best <b id="best">0</b></span>
+    </div>
+    <div class="question" id="question">Which chord is this?</div>
+    <canvas id="neck"></canvas>
+    <div class="actions">
+      <button class="btn-round" id="strum">Strum ↓</button>
+      <button class="btn-round" id="arp">One by one</button>
+      <button class="btn-round" id="hint">Hint</button>
+      <button class="btn-round" id="answer">Answer</button>
+    </div>
+    <ol class="hints" id="hints"></ol>
+    <div class="choices" id="choices"></div>
+    <button class="action next" id="next">Next chord →</button>
+  </section>
+
+  <section>
+    <h2>Game</h2>
+    <div class="row"><span>Mode</span>
+      <div class="seg" id="mode"><button data-v="see">See the shape</button><button data-v="ear">By ear</button></div>
+    </div>
+    <div class="row families"><span>Chords</span><div id="families"></div></div>
+    <label class="row"><span>Volume</span><input type="range" id="volume" min="0" max="100" value="80"></label>
+    <p class="help">Fewer hints, more points (3 without any). A wrong answer ends the streak.
+      "By ear": the shape is hidden, listen and guess; the first hint shows it.</p>
+  </section>
+</main>
+<script src="../audio.js"></script>
+<script src="shapes.js"></script>
+<script src="pluck.js"></script>
+<script src="neck.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

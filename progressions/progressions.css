@@ -1,0 +1,85 @@
+/* Chord progressions page: extends ../common.css */
+
+:root { --c-bass: #5ec4f2; }
+
+/* Current progression: one chip per chord, the one playing lights up */
+.strip { display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 3.4rem; }
+.strip .chord {
+  min-width: 4.2rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 12px;
+  background: var(--card-active);
+  border: 1px solid transparent;
+  display: flex; flex-direction: column; gap: 0.1rem;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.strip .chord b { font-size: 1.15rem; font-weight: 600; }
+.strip .chord small { color: var(--muted); font-size: 0.8rem; }
+.strip .chord.on { border-color: var(--accent); background: #2b2745; box-shadow: 0 0 24px -8px var(--accent); }
+
+/* Player: stays at the top of the screen while the list scrolls (if there is room) */
+.player { gap: 0.8rem; z-index: 2; box-shadow: 0 10px 30px -12px #000; }
+@media (min-width: 600px) and (min-height: 640px) { .player { position: sticky; top: 8px; } }
+.player .transport { display: flex; align-items: center; gap: 1.1rem; }
+.player .play { width: 60px; height: 60px; }
+.views canvas { width: 100%; border-radius: 8px; background: transparent; }
+.views canvas[hidden] { display: none; }
+canvas#keys { height: 56px; }
+canvas#guitar { height: 150px; }
+canvas#push { height: 232px; }
+.player-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.2rem; }
+.mini { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+.mini select { flex: none; width: 4.5rem; }
+.mini.tempo { flex: 1; min-width: 200px; }
+.mini output { width: 4.2rem; text-align: right; color: var(--fg); font-variant-numeric: tabular-nums; }
+.help a { color: var(--accent); text-decoration: none; }
+
+.seg { flex-wrap: wrap; }
+.action {
+  background: var(--card-active); color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 999px;
+  padding: 0.4rem 1rem; font: inherit; font-size: 0.85rem; cursor: pointer;
+}
+.action:hover { background: #2b2745; }
+
+/* Styles */
+/* Styles: a grid of buttons of the same size */
+.styles { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 0.4rem; }
+@media (max-width: 560px) {
+  .styles { grid-template-columns: repeat(3, 1fr); }
+  .styles button { font-size: 0.76rem; padding: 0.5rem 0.2rem; }
+}
+.styles button {
+  background: var(--card-active); color: var(--fg);
+  border: 1px solid transparent; border-radius: 10px;
+  padding: 0.5rem 0.4rem; font: inherit; font-size: 0.82rem; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.styles button:hover { border-color: #3a3557; }
+.styles button.active { border-color: var(--accent); color: var(--accent); }
+
+/* List of progressions */
+.list { display: flex; flex-direction: column; gap: 0.5rem; }
+.prog {
+  background: var(--card-active);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 0.7rem 0.85rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.3rem 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.prog:hover, .prog:focus-visible { border-color: #3a3557; outline: none; }
+.prog.active { border-color: var(--accent); background: #24203a; }
+.prog .numerals { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.prog .numerals span {
+  font-weight: 600; font-size: 0.95rem;
+  background: var(--card); border-radius: 8px; padding: 0.15rem 0.5rem;
+}
+.prog .lift { color: var(--accent); font-size: 0.85rem; font-variant-numeric: tabular-nums; align-self: center; }
+.prog .names { grid-column: 1 / -1; font-size: 0.9rem; }
+.prog .meta { grid-column: 1 / -1; color: var(--muted); font-size: 0.78rem; }
+.prog .meta a { color: var(--accent); text-decoration: none; }
+.prog .meta a:hover { text-decoration: underline; }

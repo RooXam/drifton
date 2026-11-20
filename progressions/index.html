@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<title>Drifton Chord progressions</title>
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="progressions.css">
+</head>
+<body>
+<main class="lab prog-page">
+  <header>
+    <a href="../index.html" class="back">← Drifton</a>
+    <h1>Chord progressions</h1>
+    <p class="intro">
+      Progressions that are typical of a style and rare elsewhere, found in the chords of
+      680,000 songs. Pick a style, listen, change the key, take one to your DAW.
+    </p>
+  </header>
+
+  <section class="player" id="player">
+    <div class="transport">
+      <button class="play" id="play" aria-label="Play / Stop">
+        <svg viewBox="0 0 24 24"><path id="play-icon" d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="transport-side">
+        <div class="strip" id="strip"></div>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+    <div class="views">
+      <canvas id="keys"></canvas>
+      <canvas id="guitar" hidden></canvas>
+      <canvas id="push" hidden></canvas>
+    </div>
+    <div class="player-bar">
+      <div class="seg" id="view">
+        <button data-v="piano">Piano</button><button data-v="guitar">Guitar</button><button data-v="push">Push</button>
+      </div>
+      <label class="mini"><span>Tonic</span><select id="key"></select></label>
+      <label class="mini tempo"><span>Tempo</span><input type="range" id="bpm" min="50" max="140" value="80"><output id="bpm-out"></output></label>
+      <button class="action" id="export" title="A chord track and a bass track, with the rhythm chosen below">Export MIDI ↓</button>
+    </div>
+  </section>
+
+  <section>
+    <nav class="styles" id="styles"></nav>
+    <p class="help" id="style-help"></p>
+    <div class="row"><span>Chords</span>
+      <div class="seg" id="colour">
+        <button data-v="plain">Plain</button><button data-v="colour">As played in the style</button>
+      </div>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section>
+    <h2>Rhythm and sound</h2>
+    <div class="row"><span>Rhythm</span>
+      <div class="seg" id="rhythm">
+        <button data-v="held">Held</button><button data-v="pulse">Pulse</button><button data-v="push">Push</button><button data-v="arp">Arpeggio</button>
+      </div>
+    </div>
+    <div class="row"><span>Sound</span>
+      <div class="seg" id="sound">
+        <button data-v="piano">Piano</button><button data-v="pad">Synth pad</button>
+      </div>
+    </div>
+    <label class="row"><span>Volume</span><input type="range" id="volume" min="0" max="100" value="80"></label>
+    <p class="help">"Synth pad" plays the Pad and Bass sounds of the <a href="../synth/index.html">synth</a>,
+      as you saved them. The chord notes are violet, the bass blue. In the guitar view you hear
+      the notes of the chord shapes, strummed. The Push view is the chromatic note layout in
+      fourths (Push 1, 2, 3): scale pads lit softly, the tonic a bit more.</p>
+  </section>
+
+  <p class="foot">
+    Data: <a href="https://huggingface.co/datasets/ailsntua/Chordonomicon">Chordonomicon</a>
+    (CC BY-NC 4.0), analysed with Python (<a href="https://github.com/RooXam/drifton/tree/main/tools/progressions">how</a>).
+    Keys are guessed from the chords, so a few numerals may be off.
+  </p>
+</main>
+<script src="../audio.js"></script>
+<script src="../synth/util.js"></script>
+<script src="../synth/params.js"></script>
+<script src="../synth/envelope.js"></script>
+<script src="../synth/lfo.js"></script>
+<script src="../synth/osc.js"></script>
+<script src="../synth/voice.js"></script>
+<script src="../synth/synth.js"></script>
+<script src="../synth/patches.js"></script>
+<script src="../synth/storage.js"></script>
+<script src="../score/piano.js"></script>
+<script src="data.js"></script>
+<script src="theory.js"></script>
+<script src="sound.js"></script>
+<script src="player.js"></script>
+<script src="midiwrite.js"></script>
+<script src="keys.js"></script>
+<script src="guitar.js"></script>
+<script src="push.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

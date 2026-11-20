@@ -3,6 +3,7 @@
 :root {
   --c-pad: #8a7fff;
   --c-bass: #4fb8a8;
+  --c-keys: #c4bdff;
   --c-bells: #f2c46d;
   --c-texture: #d07fb0;
 }
@@ -31,3 +32,6 @@ canvas#roll { height: 220px; }
 
 .role .edit { color: var(--accent); text-decoration: none; font-size: 0.85rem; }
 .role .edit:hover { text-decoration: underline; }
+
+.moods { flex-wrap: wrap; }
+.row.check span { width: auto; }

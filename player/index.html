@@ -3,34 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0a0a0f">
-<title>Drifton</title>
-<link rel="stylesheet" href="styles.css">
+<!-- The Drone tool became a mood of Focus music: old links land there. -->
+<meta http-equiv="refresh" content="0; url=../generator/index.html?mood=drone">
+<title>Drifton Drone</title>
+<link rel="stylesheet" href="../common.css">
 </head>
 <body>
-  <div class="breath" id="breath"></div>
-
-  <div class="stage">
-    <h1>Focus</h1>
-
-    <div class="presets" id="presets"></div>
-
-    <button class="play" id="play" aria-label="Play / Pause">
-      <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-    </button>
-
-    <div class="volume">
-      <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4z"/></svg>
-      <input type="range" id="volume" min="0" max="100" value="65" aria-label="Volume">
-    </div>
-  </div>
-
-  <a class="home" href="../index.html">← Drifton</a>
-  <div class="hint">Local generative drone</div>
-
-  <!-- Load order matters: presets (config) → engine (sound) → ui (controls) -->
-  <script src="presets.js"></script>
-  <script src="engine.js"></script>
-  <script src="ui.js"></script>
+<main class="lab">
+  <p class="intro">Drone is now a mood of <a href="../generator/index.html?mood=drone">Focus music</a>.</p>
+</main>
 </body>
 </html>

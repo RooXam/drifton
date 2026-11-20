@@ -30,6 +30,16 @@ class Harmony {
     this.root = root; // pitch class: 0 = C, 2 = D …
     this.mode = mode;
     this.scale = MODES[mode];
+    this.style = this.style || "sevenths";
+  }
+
+  // "sevenths": chords stacked in thirds (root, 3rd, 5th, 7th, 9th), lush and jazzy.
+  // "sus": root, 5th, 2nd and 6th, no third: open, neither happy nor sad, the hazy
+  // sound of hazy 90s electronica (sus2 chords with an added sixth).
+  // "drone": root and fifth (plus the 2nd for melodies to lean on), held for a long
+  // time: the chord barely moves, and only to its neighbours a fourth or fifth away.
+  setStyle(style) {
+    this.style = style;
   }
 
   // Pitch class (0–11) of scale degree d (d can go beyond 7: degree 8 = degree 1).
@@ -44,7 +54,8 @@ class Harmony {
 
   // Pitch classes of the chord on degree d: root, 3rd, 5th, 7th, 9th.
   chordTones(d) {
-    return [0, 2, 4, 6, 8].map((k) => this.pc(d + k));
+    const steps = { sus: [0, 4, 1, 5], drone: [0, 4, 1] }[this.style] || [0, 2, 4, 6, 8];
+    return steps.map((k) => this.pc(d + k));
   }
 
   // We skip the diminished chord (no perfect fifth): too tense for this music.
@@ -53,6 +64,11 @@ class Harmony {
   }
 
   chordName(d) {
+    if (this.style === "drone") return { name: NOTE_NAMES[this.pc(d)] + "5", roman: ROMAN[mod(d, 7)] + "5" };
+    if (this.style === "sus") {
+      const sixth = this.interval(d, 5) === 9 ? "6" : "(b6)";
+      return { name: NOTE_NAMES[this.pc(d)] + "sus2" + sixth, roman: ROMAN[mod(d, 7)] + "sus" };
+    }
     const minor = this.interval(d, 2) === 3;
     const seventh = this.interval(d, 6);
     const quality = minor ? (seventh === 10 ? "m7" : "m(maj7)") : seventh === 11 ? "maj7" : "7";
@@ -63,6 +79,12 @@ class Harmony {
   // Pick the next chord: a weighted random choice (a "Markov chain": the next state
   // depends only on the current one). Coming back home (degree 0) gets a bonus.
   nextDegree(from) {
+    if (this.style === "drone") {
+      // Mostly stay home; now and then lean to the fourth or the fifth, then come back.
+      if (from !== 0) return 0;
+      if (Math.random() < 0.7) return 0;
+      return [3, 4].filter((d) => this.usable(d))[Math.random() < 0.5 ? 0 : 1] ?? 0;
+    }
     const options = [];
     for (let d = 0; d < 7; d++) {
       if (d === from || !this.usable(d)) continue;
