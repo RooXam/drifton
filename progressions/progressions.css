@@ -17,15 +17,12 @@
 .strip .chord small { color: var(--muted); font-size: 0.8rem; }
 .strip .chord.on { border-color: var(--accent); background: #2b2745; box-shadow: 0 0 24px -8px var(--accent); }
 
-/* Player: stays at the top of the screen while the list scrolls (if there is room), on
-   an opaque panel so what scrolls under it stays hidden. Its transport is not a second
-   panel inside it. */
+/* Player: a panel at the top of the page that scrolls with it (no longer stuck to the
+   top: it hid half the screen). Its transport is not a second panel inside it. */
 .player {
-  gap: 0.8rem; z-index: 2;
+  gap: 0.8rem;
   background: var(--surface); border: 1px solid var(--rule); border-radius: 20px; padding: 1.25rem;
-  box-shadow: 0 10px 30px -12px #000;
 }
-@media (min-width: 600px) and (min-height: 640px) { .player { position: sticky; top: 8px; } }
 .player .transport { display: flex; align-items: center; gap: 1.1rem; border: 0; background: none; padding: 0; border-radius: 0; }
 .player .play { width: 60px; height: 60px; }
 .views canvas { width: 100%; border-radius: 8px; background: transparent; }
