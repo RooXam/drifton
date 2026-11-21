@@ -32,6 +32,13 @@ Deux roadmaps :
 - Commiter et pousser sans demander une fois le travail fini et testé (message en anglais) ;
   demander avant toute réécriture d'historique (squash, force push).
 
+## Documentation technique
+
+`docs/` explique le fonctionnement (algorithmes, chemin du son, données) avec des schémas
+Mermaid, en deux langues avec les mêmes pages : `docs/fr/` et `docs/en/`. Quand un
+algorithme, un format de données ou une clé de stockage change, mettre à jour la page
+concernée dans les deux langues, dans le même commit.
+
 ## Plan du code
 
 Un fichier = une brique ; l'ordre des `<script>` en bas de chaque `index.html` compte.

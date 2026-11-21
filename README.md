@@ -4,7 +4,7 @@ Small sound tools that run in your browser: listen, play, learn, make.
 
 A collection of simple tools around sound, sharing the same home-made Web Audio engine
 and design: generative functional music to focus or relax, a piano practice player,
-chord progressions by style, a synth… No dependencies, no server. See [`ROADMAP.md`](ROADMAP.md).
+chord progressions by style, a synth… No dependencies, no server. See [`ROADMAP.md`](ROADMAP.md), and [`docs/`](docs/README.md) for how it works inside (English and French).
 
 Live: https://rooxam.github.io/drifton/
 
