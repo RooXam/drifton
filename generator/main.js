@@ -4,7 +4,10 @@
 const ctx = createAudio(); // ../audio.js: works on iPhone too (silent switch, gestures)
 const master = new MasterBus(ctx);
 master.input.gain.value = 0.8;
-const fx = new FxBus(ctx, master.input); // ../synth/effects.js: reverb, echo, warmth, pulse
+// The end of a session fades everything out here, before the volume.
+const sessionFade = ctx.createGain();
+sessionFade.connect(master.input);
+const fx = new FxBus(ctx, sessionFade); // ../synth/effects.js: reverb, echo, warmth, pulse
 
 const ROLES = [
   { id: "pad", name: "Pad", patch: "Pad", volume: 1 },
@@ -18,14 +21,21 @@ const ROLES = [
 // its own effects: chorus inside the synth, and how much goes to the room and the echo
 // (the sound's "fx.reverb" / "fx.delay"). The volume is the generator's own mix, not
 // part of the sound. After each synth, a "layer" gain lets the conductor fade the
-// instrument in and out.
-const synths = {}, layers = {}, sends = {};
+// instrument in and out. Pad and texture first go through a "breathing" filter
+// (session.js) that opens and closes slowly.
+const synths = {}, layers = {}, sends = {}, breath = {};
 for (const r of ROLES) {
   const patch = currentPatch(r.patch);
   layers[r.id] = ctx.createGain();
   layers[r.id].connect(fx.input);
   sends[r.id] = fx.connect(layers[r.id], patch["fx.reverb"], patch["fx.delay"]);
-  synths[r.id] = new Synth(ctx, { ...patch, volume: r.volume }, layers[r.id]);
+  let out = layers[r.id];
+  if (r.id === "pad" || r.id === "texture") {
+    breath[r.id] = new BreathFilter(ctx, r.id === "pad" ? 2000 : 2600);
+    breath[r.id].output.connect(layers[r.id]);
+    out = breath[r.id].input;
+  }
+  synths[r.id] = new Synth(ctx, { ...patch, volume: r.volume }, out);
 }
 synths.keys.maxVoices = 14; // arpeggio notes ring over each other
 
@@ -48,7 +58,7 @@ const colors = Object.fromEntries(ROLES.map((r) => [r.id, css.getPropertyValue(`
 // ---- Settings, remembered in the browser ----
 
 const SAVE_KEY = "drifton.focus.v1";
-const prefs = { mood: "auto", key: 2, volume: 80, evolve: true, volumes: {}, on: {}, open: {} };
+const prefs = { mood: "auto", key: 2, volume: 80, evolve: true, session: 0, volumes: {}, on: {}, open: {} };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}); } catch {}
 const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(prefs)); } catch {} };
 
@@ -66,20 +76,119 @@ document.getElementById("reset").addEventListener("click", () => {
   location.href = location.pathname; // reload, without ?mood=…
 });
 
+// ---- Session: its arc, the slow drift, and what the music actually plays ----
+
+// What the sliders say. The music plays values moved a little around them by the
+// session arc and the slow drift (steer), so the sliders never jump around by themselves.
+const base = { bpm: 72, density: 0.35, movement: 0.4, reverb: 0.35, warmth: 0.55 };
+let mood = MOODS.focus;  // the mood in use (Auto: the one it picked)
+let session = null;      // while playing: { start, arc, fading }
+// Typical drift: ±6 % density, ±4 % movement, brightness ±0.05 (on the warmth and the
+// breathing filters). Small on purpose: you should not notice it, only feel it.
+const drift = new Drift({ density: 0.06, movement: 0.04, bright: 0.05 });
+
+function steer() {
+  const t = session ? ctx.currentTime - session.start : 0;
+  const e = session ? session.arc.energy(t) : 1; // 0.45 at the start and end, 1 in the middle
+  const d = drift.x;
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  // Low energy: fewer bells, less rhythm, a darker sound, one optional layer at a time.
+  gen.density = clamp((base.density + d.density) * (0.35 + 0.65 * e));
+  gen.movement = clamp((base.movement + d.movement) * (0.5 + 0.5 * e));
+  fx.setWarmth(clamp(base.warmth - d.bright + (1 - e) * 0.25));
+  fx.setReverb(clamp(base.reverb));
+  if (gen.bpm !== base.bpm) { gen.bpm = base.bpm; fx.setDelayTime((60 / base.bpm) * 0.75); }
+  gen.maxLayers = Math.min(mood.layers || 2, e < 0.75 ? 1 : 2);
+  // The breathing filters: up to an octave darker at low energy, and drifting too.
+  for (const b of Object.values(breath)) b.setBase(-(1 - e) * 1.8 + d.bright * 4);
+}
+
+function makeArc(skipRise) {
+  return new SessionArc(prefs.session, { shape: mood.arc, fade: mood.fade || 75, skipRise });
+}
+
+// Every 2 seconds while playing: drift a little, follow the arc, end the session.
+setInterval(() => {
+  if (!session) return;
+  drift.step(2);
+  steer();
+  const t = ctx.currentTime - session.start;
+  if (!session.fading && t >= session.arc.fadeAt) fadeOut(session.arc.endAt - t);
+  if (t >= session.arc.endAt) stopPlaying();
+}, 2000);
+
+// The end of a session: everything fades out, slowly (a falling curve in decibels,
+// the way a hand turns a volume knob down), then the music stops.
+function fadeOut(seconds) {
+  session.fading = true;
+  const g = sessionFade.gain, now = ctx.currentTime;
+  holdAt(g, now);
+  g.exponentialRampToValueAtTime(0.001, now + seconds);
+  g.setValueAtTime(0, now + seconds);
+}
+
+function cancelFade() {
+  const g = sessionFade.gain;
+  holdAt(g, ctx.currentTime);
+  g.setTargetAtTime(1, ctx.currentTime, 0.5);
+}
+
 // ---- Transport ----
 
 const playBtn = $("play");
 const PLAY_PATH = "M8 5v14l11-7z";
 const STOP_PATH = "M7 7h10v10H7z";
 
-playBtn.addEventListener("click", async () => {
-  await ctx.resume();
-  if (gen.running) gen.stop();
-  else gen.start();
+function startPlaying() {
+  const g = sessionFade.gain;
+  g.cancelScheduledValues(0);
+  g.setValueAtTime(1, ctx.currentTime);
+  session = { start: ctx.currentTime + 0.1, arc: makeArc(false), fading: false };
+  steer(); // the arc's gentle start, before the first notes
+  gen.start();
+  showPlaying();
+}
+
+function stopPlaying() {
+  gen.stop();
+  session = null;
+  steer();
+  showPlaying();
+}
+
+function showPlaying() {
   fx.setActive(gen.running);
   playBtn.classList.toggle("playing", gen.running);
   document.querySelectorAll(".play-path").forEach((p) => p.setAttribute("d", gen.running ? STOP_PATH : PLAY_PATH));
+}
+
+playBtn.addEventListener("click", async () => {
+  await ctx.resume();
+  if (gen.running) stopPlaying();
+  else startPlaying();
 });
+
+// Session length: endless, or a number of minutes with a beginning, a middle and an end.
+const SESSIONS = [0, 15, 25, 50, 90];
+const sessionEl = $("session");
+sessionEl.innerHTML = SESSIONS.map((m) => `<button data-v="${m}">${m ? m + " min" : "Endless"}</button>`).join("");
+function setSession(minutes) {
+  prefs.session = minutes;
+  save();
+  sessionEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", Number(b.dataset.v) === minutes));
+  // Changed while playing: the new length counts from now, without a second gentle start.
+  if (session) {
+    if (session.fading) cancelFade();
+    session = { start: ctx.currentTime, arc: makeArc(true), fading: false };
+    steer();
+  }
+}
+sessionEl.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (b) setSession(Number(b.dataset.v));
+});
+if (!SESSIONS.includes(prefs.session)) prefs.session = 0;
+setSession(prefs.session);
 
 $("volume").value = prefs.volume;
 setParam(ctx, master.input.gain, prefs.volume / 100, false);
@@ -107,13 +216,13 @@ function slider(id, format, apply) {
 const pct = (v) => Math.round(v) + "%";
 let pulseRate = 16; // set by the mood (Hz)
 const ctl = {
-  bpm: slider("bpm", (v) => v + " bpm", (v) => { gen.bpm = v; fx.setDelayTime((60 / v) * 0.75); }),
+  bpm: slider("bpm", (v) => v + " bpm", (v) => { base.bpm = v; steer(); }),
   chordLen: slider("chord-len", (v) => v + " s", (v) => (gen.chordSeconds = v)),
-  density: slider("density", pct, (v) => gen.setDensity(v / 100)),
-  movement: slider("movement", pct, (v) => (gen.movement = v / 100)),
-  space: slider("space", pct, (v) => fx.setReverb(v / 100)),
+  density: slider("density", pct, (v) => { base.density = v / 100; steer(); gen.setDensity(gen.density); }),
+  movement: slider("movement", pct, (v) => { base.movement = v / 100; steer(); }),
+  space: slider("space", pct, (v) => { base.reverb = v / 100; steer(); }),
   echo: slider("echo", pct, (v) => fx.setDelay(v / 100)),
-  warmth: slider("warmth", pct, (v) => fx.setWarmth(v / 100)),
+  warmth: slider("warmth", pct, (v) => { base.warmth = v / 100; steer(); }),
   pulse: slider("pulse", pct, (v) => fx.setPulse(v / 100, pulseRate)),
   tape: slider("tape", pct, (v) => fx.setTape(v / 100)),
 };
@@ -141,6 +250,11 @@ function applyMood(id, keepSliders = false) {
   const m = MOODS[real];
   prefs.mood = id;
   if (id === "auto") prefs.autoMood = real; // the mood Auto applied, to notice when the hour changes it
+  mood = m;
+  // A mood with its own session length (Sleep) sets it when chosen by hand, if none was set.
+  if (!keepSliders && id !== "auto" && m.session && !prefs.session) setSession(m.session);
+  // Playing: the session keeps its start, with this mood's arc and fade.
+  if (session && !session.fading) session.arc = makeArc(ctx.currentTime - session.start > session.arc.rise);
   pulseRate = m.pulseRate;
   harmony.setStyle(m.chords);
   gen.riff = m.riff;
@@ -157,6 +271,7 @@ function applyMood(id, keepSliders = false) {
     ctl.tape.set(Math.round(m.tape * 100));
   }
   ctl.pulse.set(keepSliders && prefs.pulse !== undefined ? prefs.pulse : Math.round(m.pulse * 100));
+  steer();
   moodsEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.v === id));
   $("mood-help").textContent = (id === "auto" ? `Auto, from the time of day: ${m.label}. ` : "") + m.help;
   save();
@@ -256,8 +371,11 @@ function updateReadout() {
   const chord = gen.running ? gen.chordAt(now) : null;
   $("chord").innerHTML = chord ? `${chord.name}<small>${chord.roman}</small>` : "—";
   const keyName = `${NOTE_NAMES[harmony.root]} ${harmony.mode}`;
+  let left = "";
+  if (session && session.fading) left = " · fading out";
+  else if (session && !session.arc.endless) left = ` · ${Math.max(1, Math.ceil((session.arc.endAt - (now - session.start)) / 60))} min left`;
   $("status").textContent = gen.running
-    ? `${keyName}, next chord in ${Math.max(0, Math.round(gen.nextChord - now))} s`
+    ? `${keyName}, next chord in ${Math.max(0, Math.round(gen.nextChord - now))} s${left}`
     : `${keyName}, press play`;
 }
 

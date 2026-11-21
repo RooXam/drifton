@@ -33,7 +33,7 @@ canvas#roll { height: 220px; }
 .role .edit { color: var(--accent); text-decoration: none; font-size: 0.85rem; }
 .role .edit:hover { text-decoration: underline; }
 
-.moods { flex-wrap: wrap; }
+.moods, .seg.wrap { flex-wrap: wrap; }
 .row.check span { width: auto; }
 
 /* Visualizer: the picture, with Play and full screen on top */
