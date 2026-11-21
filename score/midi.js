@@ -148,13 +148,15 @@ function parseMidi(buffer) {
     };
   });
 
-  const bars = division & 0x8000 ? [] : barLines(division, meters, lastTick, toSeconds);
+  const beats = []; // filled by barLines: every beat (metronome, chord analysis)
+  const bars = division & 0x8000 ? [] : barLines(division, meters, lastTick, toSeconds, beats);
   const firstTempo = tempos.find((t) => t.tick === 0);
   const firstMeter = meters.find((m) => m.tick === 0);
   return makeSong(notes, parts, bars, {
     bpm: firstTempo ? 60e6 / firstTempo.mpq : 120,
     meter: firstMeter ? `${firstMeter.num}/${firstMeter.den}` : "4/4",
     flats: !!flats,
+    beats: beats.length ? beats : null,
   });
 }
 
@@ -188,8 +190,9 @@ function tickConverter(division, tempos) {
   };
 }
 
-// Bar start times in seconds, following the time signature changes.
-function barLines(ppq, meters, lastTick, toSeconds) {
+// Bar start times in seconds, following the time signature changes. Also pushes every
+// beat into `beats` (a beat = one note of the signature's lower number: a quarter in 4/4).
+function barLines(ppq, meters, lastTick, toSeconds, beats = []) {
   meters.sort((a, b) => a.tick - b.tick);
   const bars = [];
   let num = 4, den = 4, m = 0, tick = 0;
@@ -198,6 +201,7 @@ function barLines(ppq, meters, lastTick, toSeconds) {
     bars.push(toSeconds(tick));
     let next = tick + Math.max(1, (ppq * 4 * num) / den);
     if (m < meters.length && meters[m].tick < next) next = meters[m].tick; // change mid-bar
+    for (let b = tick; b < next - 1e-6; b += (ppq * 4) / den) beats.push(toSeconds(b));
     tick = next;
   }
   return bars;
@@ -246,10 +250,22 @@ function makeSong(notes, parts, bars, info = {}) {
   return {
     notes, parts, duration, maxLength, low, high,
     bars: bars.filter((t) => t < duration),
+    beats: (info.beats || evenBeats(bars, duration, info.meter)).filter((t) => t < duration),
     bpm: info.bpm || 120,
     meter: info.meter || "4/4",
     flats: !!info.flats,
   };
+}
+
+// No beats given (the demo): split each bar evenly by the signature's upper number.
+function evenBeats(bars, duration, meter = "4/4") {
+  const n = Number(meter.split("/")[0]) || 4;
+  const beats = [];
+  bars.forEach((t, i) => {
+    const end = i + 1 < bars.length ? bars[i + 1] : t + (i ? t - bars[i - 1] : duration - t);
+    for (let k = 0; k < n; k++) beats.push(t + ((end - t) * k) / n);
+  });
+  return beats;
 }
 
 function findChunk(bytes, id) {
