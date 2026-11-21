@@ -104,3 +104,91 @@ canvas#guitar { width: 100%; height: 150px; background: transparent; border-radi
 .sg .ly { font-size: 1.02rem; line-height: 1.5; }
 .sline.only { gap: 0.9rem; }
 .sline.only .ly { display: none; }
+
+/* Arrangement: lines of bars; in a bar each chord is as wide as its beats */
+.bars { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.45rem 0; }
+.bar {
+  flex: 1 1 150px; max-width: 260px; display: grid; gap: 0.25rem;
+  padding: 0 0.35rem; border-left: 2px solid var(--rule-2);
+}
+.bar:last-of-type { border-right: 2px solid var(--rule-2); }
+.bar .chip { min-width: 0; align-items: flex-start; overflow: hidden; }
+.bar .chip b { white-space: nowrap; }
+.bar .hold { color: var(--muted); padding: 0.3rem 0.4rem; }
+.bars .repeat { align-self: center; margin-left: 0.5rem; }
+
+/* The strum pattern: arrows over the counts, the stroke playing lit */
+.strum-view { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.strum-label { color: var(--muted); font-size: 0.85rem; }
+.strokes { display: flex; gap: 0.2rem; flex-wrap: wrap; }
+.stroke {
+  width: 2rem; padding: 0.2rem 0; border-radius: 8px; border: 1px solid transparent;
+  display: flex; flex-direction: column; align-items: center; line-height: 1.2;
+}
+.stroke b { font-size: 1.15rem; color: var(--fg); }
+.stroke small { font-size: 0.7rem; color: var(--muted); }
+.stroke.rest b { color: var(--rule-2); }
+.stroke.soft b { color: var(--muted); }
+.stroke.on { border-color: var(--accent); background: var(--accent-soft); }
+.stroke.on b { color: var(--accent); }
+
+/* Reading bar: scroll on its own, its speed, full screen */
+.read-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.1rem; }
+.read-bar .speed input { width: 7rem; }
+.read-bar #reading { margin-left: auto; }
+.r-play, .r-now { display: none; }
+.r-play {
+  width: 40px; height: 40px; border-radius: 50%; flex: none; cursor: pointer;
+  border: 1px solid var(--rule-2); background: var(--surface-2); color: var(--accent);
+  align-items: center; justify-content: center;
+}
+.r-play svg { width: 45%; height: 45%; fill: currentColor; }
+.r-play.playing { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* Full-screen reading: the song's box covers the page, the chords get big */
+body.reading-open { overflow: hidden; }
+.sheet-box.reading {
+  position: fixed; inset: 0; z-index: 50; margin: 0; border: 0;
+  background: var(--bg); overflow-y: auto; overscroll-behavior: contain;
+  padding: 0 max(16px, calc((100vw - 960px) / 2)) 45vh;
+}
+.reading .read-bar {
+  position: sticky; top: 0; z-index: 2; background: var(--bg);
+  padding: 0.7rem 0; border-bottom: 1px solid var(--rule);
+}
+.reading .r-play { display: flex; }
+.reading .r-now { display: block; font-weight: 600; font-size: 1.1rem; min-width: 3rem; }
+.reading .sections { gap: 1.6rem; padding-top: 1rem; }
+.reading .chip { padding: 0.45rem 0.7rem; }
+.reading .chip b { font-size: 1.55rem; }
+.reading .chip small { font-size: 0.85rem; }
+.reading .bar { flex-basis: 210px; max-width: 340px; }
+.reading .sg .ch { font-size: 1.35rem; }
+.reading .sg .ly { font-size: 1.3rem; }
+.reading .part-head h3 { font-size: 0.85rem; }
+@media (max-width: 560px) {
+  .reading .chip b { font-size: 1.3rem; }
+  .reading .bar { flex-basis: 160px; }
+  .read-bar .speed input { width: 5.5rem; }
+  .reading .read-bar { gap: 0.5rem 0.8rem; }
+  .reading .read-bar .speed > span { display: none; }
+  .reading .r-now { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* The card of a chord touched: its chart, play from there, open it in Chords */
+.chord-pop {
+  position: fixed; z-index: 60; display: flex; align-items: center; gap: 0.6rem;
+  background: var(--surface); border: 1px solid var(--rule-2); border-radius: 14px;
+  padding: 0.4rem 0.8rem 0.4rem 0.3rem; box-shadow: 0 16px 32px -12px rgb(0 0 0 / 0.8);
+}
+.chord-pop canvas { width: 120px; height: 150px; cursor: pointer; }
+.pop-side { display: flex; flex-direction: column; gap: 0.5rem; }
+.pop-side button, .pop-side a {
+  background: var(--surface-2); color: var(--fg); border: 1px solid transparent; border-radius: 999px;
+  padding: 0.45rem 0.9rem; font: inherit; font-size: 0.85rem; cursor: pointer; text-decoration: none;
+  white-space: nowrap; text-align: center;
+}
+.pop-side a { color: var(--accent); border-color: var(--accent); }
+.pop-side button:hover { border-color: var(--rule-2); }
+.arr-help p { margin: 0; }
+.arr-help code { color: var(--fg-2); font-size: 0.82rem; white-space: pre; }
