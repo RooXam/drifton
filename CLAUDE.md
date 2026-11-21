@@ -29,7 +29,8 @@ Deux roadmaps :
   toucher, clic), reprise au retour sur l'onglet.
 - Jamais de paroles de chansons dans le dépôt (public, droit d'auteur) : accords et
   sections seulement ; les paroles restent sur l'appareil de l'utilisateur.
-- Ne commiter que sur demande.
+- Commiter et pousser sans demander une fois le travail fini et testé (message en anglais) ;
+  demander avant toute réécriture d'historique (squash, force push).
 
 ## Plan du code
 
