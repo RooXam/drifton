@@ -20,6 +20,10 @@ class Player {
     this.cursor = null; // how far the notes are scheduled: { time, pos, index }
     this.timer = null;
     this.onEnd = null;
+    this.click = null;      // a Click (metronome.js), set by the page
+    this.metronome = false; // click on every beat while playing
+    this.countIn = 0;       // bars of clicks before playing starts (0, 1, 2)
+    this.countSpan = null;  // { start, end, beat } audio times of the count-in under way
   }
 
   load(song) {
@@ -27,6 +31,8 @@ class Player {
     this.song = song;
     this.pos = -LEAD_IN;
     this.loop = { on: false, a: 0, b: song.duration };
+    // Bar starts, to accent the first beat of each bar.
+    this.barSet = new Set(song.bars.map((t) => t.toFixed(3)));
   }
 
   // Current position in the song.
@@ -44,7 +50,33 @@ class Player {
     let p = this.pos;
     if (on && (p < a - LEAD_IN || p >= b)) p = a - 1; // 1 second before the loop
     if (!on && p >= this.song.duration) p = -LEAD_IN;
-    this.startAt(p);
+    if (this.countIn && this.click) this.startWithCountIn(p);
+    else this.startAt(p);
+  }
+
+  // Count-in: start on a beat (the one just before p, or the first), and before it play
+  // `countIn` bars of clicks. The notes keep falling meanwhile: the position runs from
+  // before that beat, so the music starts right after the last click.
+  startWithCountIn(p) {
+    const beats = this.song.beats;
+    let i = Math.max(0, this.beatAt(p + 0.05) - 1);
+    if (!beats.length || beats[i] > p + 0.05) i = 0;
+    const from = beats.length ? beats[i] : Math.max(0, p);
+    const beat = beats.length > i + 1 ? beats[i + 1] - beats[i] : 60 / this.song.bpm;
+    const perBar = Number(this.song.meter.split("/")[0]) || 4;
+    const count = this.countIn * perBar;
+    const step = beat / this.speed; // seconds of audio per beat
+    const t0 = this.ctx.currentTime + 0.08;
+    for (let k = 0; k < count; k++) this.click.play(t0 + k * step, k % perBar === 0);
+    this.countSpan = { start: t0, end: t0 + count * step, beat: step };
+    this.startAt(from, count * step + 0.08 - 0.05);
+  }
+
+  // Silence now: the notes and the clicks scheduled ahead.
+  silence() {
+    this.sound.stopAll();
+    if (this.click) this.click.stopAll();
+    this.countSpan = null;
   }
 
   pause() {
@@ -52,14 +84,14 @@ class Player {
     this.pos = this.position();
     this.playing = false;
     clearInterval(this.timer);
-    this.sound.stopAll();
+    this.silence();
   }
 
   seek(p) {
     if (!this.song) return;
     p = Math.max(-LEAD_IN, Math.min(this.song.duration, p));
     if (this.playing) {
-      this.sound.stopAll();
+      this.silence();
       this.startAt(p);
     } else {
       this.pos = p;
@@ -70,7 +102,7 @@ class Player {
     if (this.playing) {
       const p = this.position(); // measured at the old speed
       this.speed = speed;
-      this.sound.stopAll();
+      this.silence();
       this.startAt(p);
     } else {
       this.speed = speed;
@@ -83,28 +115,28 @@ class Player {
     this.loop = { on: true, a, b };
   }
 
-  startAt(p) {
-    const t = this.ctx.currentTime + 0.05;
+  // Play from position p, `delay` seconds from now (a count-in).
+  startAt(p, delay = 0) {
+    const t = this.ctx.currentTime + 0.05 + delay;
     this.playing = true;
     this.anchors = [{ time: t, pos: p }];
-    this.cursor = { time: t, pos: p, index: this.indexAt(p) };
+    this.cursor = { time: t, pos: p, index: this.indexAt(p), beat: this.beatAt(p) };
     clearInterval(this.timer);
     this.timer = setInterval(() => this.tick(), 50);
     this.tick();
   }
 
-  // Index of the first note starting at or after p (binary search: notes are sorted).
-  indexAt(p) {
-    const notes = this.song.notes;
-    let lo = 0, hi = notes.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (notes[mid].start < p) lo = mid + 1; else hi = mid;
-    }
-    return lo;
+  // Index of the first beat at or after p.
+  beatAt(p) {
+    return lowerIndex(this.song.beats, (t) => t < p - 1e-6);
   }
 
-  // Every 50 ms: schedule the notes falling in the next LOOKAHEAD seconds.
+  // Index of the first note starting at or after p (binary search: notes are sorted).
+  indexAt(p) {
+    return lowerIndex(this.song.notes, (n) => n.start < p);
+  }
+
+  // Every 50 ms: schedule the notes (and metronome clicks) of the next LOOKAHEAD seconds.
   tick() {
     const song = this.song, now = this.ctx.currentTime, c = this.cursor;
     if (!this.loop.on && this.position(now) >= song.duration + 0.5) {
@@ -129,12 +161,21 @@ class Player {
         this.sound.play(n.pitch, n.velocity, t, length);
       }
 
+      // Metronome: a click on each beat in this stretch, accented on bar lines.
+      const beats = song.beats;
+      while (c.beat < beats.length && beats[c.beat] < to) {
+        const b = beats[c.beat++];
+        if (!this.metronome || !this.click || b < c.pos - 1e-6) continue;
+        this.click.play(c.time + (b - c.pos) / this.speed, this.barSet.has(b.toFixed(3)));
+      }
+
       const t = c.time + (to - c.pos) / this.speed;
       if (wrap) {
         // End of the loop: carry on from its start, at the exact audio time.
         c.time = t;
         c.pos = this.loop.a;
         c.index = this.indexAt(this.loop.a);
+        c.beat = this.beatAt(this.loop.a);
         this.anchors.push({ time: t, pos: this.loop.a });
       } else {
         c.time = horizon;
@@ -142,4 +183,14 @@ class Player {
       }
     }
   }
+}
+
+// Binary search in a sorted list: index of the first item for which `before` is false.
+function lowerIndex(list, before) {
+  let lo = 0, hi = list.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (before(list[mid])) lo = mid + 1; else hi = mid;
+  }
+  return lo;
 }

@@ -38,6 +38,7 @@ function chordIntervals(quality, lower) {
   if (q.startsWith("°")) { third = 3; fifth = 6; dim = true; q = q.slice(1); }
   else if (q.startsWith("+")) { third = 4; fifth = 8; q = q.slice(1); }
   if (q === "5") return [0, 7]; // power chord: no third
+  if (/(^|[^1])b5/.test(q)) fifth = 6; // "7b5" (lower case: half-diminished, m7b5)
   if (q.includes("sus4")) third = 5;
   else if (q.includes("sus2")) third = 2;
   q = q.replace(/sus[24]/, "");
@@ -98,12 +99,21 @@ const VOICE_LOW = 52, VOICE_HIGH = 76; // E3..E5
 
 function voiceChord(chord, previous) {
   const pcs = [...new Set(chord.intervals.map((i) => (chord.root + i) % 12))];
-  // Try every inversion and octave; keep the closest to the previous voicing.
   const target = previous && previous.length ? previous : [60, 64, 67];
+  const best = placeClosest(pcs, target, VOICE_LOW, VOICE_HIGH);
+  return { bass: bassNote(chord), notes: best || pcs.map((pc) => 60 + pc) };
+}
+
+// The bass: the chord's bass note between C2 and B2.
+const bassNote = (chord) => 36 + ((chord.bass - 36) % 12 + 12) % 12;
+
+// Pitch classes → notes stacked upwards (each inversion, each starting octave between
+// `low` and `high`), keeping the closest to `target`. Null if nothing fits.
+function placeClosest(pcs, target, low, high) {
   let best = null, bestCost = Infinity;
   for (let inv = 0; inv < pcs.length; inv++) {
     const order = pcs.slice(inv).concat(pcs.slice(0, inv));
-    for (let start = VOICE_LOW; start < VOICE_LOW + 12; start++) {
+    for (let start = low; start < low + 12; start++) {
       if (start % 12 !== order[0]) continue;
       const notes = [start];
       for (const pc of order.slice(1)) {
@@ -111,13 +121,12 @@ function voiceChord(chord, previous) {
         while (p % 12 !== pc) p++;
         notes.push(p);
       }
-      if (notes[notes.length - 1] > VOICE_HIGH) continue;
+      if (notes[notes.length - 1] > high) continue;
       const cost = distance(notes, target);
       if (cost < bestCost) { best = notes; bestCost = cost; }
     }
   }
-  const bass = 36 + ((chord.bass - 36) % 12 + 12) % 12; // C2..B2
-  return { bass, notes: best || pcs.map((pc) => 60 + pc) };
+  return best;
 }
 
 // How far two voicings are: each note goes to the closest note of the other chord.

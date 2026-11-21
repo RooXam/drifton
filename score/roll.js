@@ -16,6 +16,7 @@ class Roll {
     this.song = null;
     this.window = 4;        // seconds of song visible above the keyboard
     this.showNames = false; // note names on the notes and keys
+    this.fullRange = false; // all 88 keys, instead of the song's range
     // The canvas follows its box size (it fills the space left on the page).
     new ResizeObserver(() => this.resize()).observe(canvas);
     this.resize();
@@ -40,7 +41,9 @@ class Roll {
   // Which keys to show, and where each one is.
   layout() {
     let lo = 48, hi = 83; // 3 octaves from C3 by default
-    if (this.song && this.song.notes.length) {
+    if (this.fullRange) {
+      lo = 21; hi = 108;
+    } else if (this.song && this.song.notes.length) {
       lo = this.song.low - (this.song.low % 12);         // down to a C
       hi = this.song.high + 11 - (this.song.high % 12);  // up to a B
       while (hi - lo < 35) { lo -= 6; hi += 6; lo -= lo % 12; hi += 11 - (hi % 12); } // at least 3 octaves

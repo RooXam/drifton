@@ -82,6 +82,26 @@ canvas#push { height: 232px; }
   background: var(--card); border-radius: 8px; padding: 0.15rem 0.5rem;
 }
 .prog .lift { color: var(--accent); font-size: 0.85rem; font-variant-numeric: tabular-nums; align-self: center; }
+.prog .side { display: flex; align-items: center; gap: 0.5rem; align-self: start; }
+/* Star (favourite) and remove buttons on a row: just the glyph, a large enough target */
+.icon-btn {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  width: 32px; height: 32px; margin: -4px -6px -4px 0; border-radius: 50%;
+  color: var(--muted); font: inherit; font-size: 1.15rem; line-height: 1;
+}
+.icon-btn:hover, .icon-btn:focus-visible { color: var(--fg); outline: none; background: var(--card); }
+.icon-btn.star.on { color: var(--accent); }
+.list .empty { color: var(--muted); font-size: 0.9rem; margin: 0.3rem 0; }
+
+/* Favourites and My progressions: after the styles, two cells wide */
+.styles button.wide { grid-column: span 2; }
+
+/* Links to the other tools, under the player bar */
+.player-links { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+a.action { text-decoration: none; display: inline-block; }
+.push-note { margin: 0.4rem 0 0; color: var(--muted); font-size: 0.82rem; min-height: 0; }
+.push-note:empty { display: none; }
+.seg[hidden], .row[hidden] { display: none; }
 .prog .names { grid-column: 1 / -1; font-size: 0.9rem; }
 .prog .meta { grid-column: 1 / -1; color: var(--muted); font-size: 0.78rem; }
 .prog .meta a { color: var(--accent); text-decoration: none; }

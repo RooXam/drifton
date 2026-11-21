@@ -1,11 +1,14 @@
-// Ableton Push pads (8×8), "Chromatic" note layout in fourths, as on Push 1, 2 and 3:
-// each pad to the right is one semitone up, each row up is a fourth (5 semitones).
-// So a chord type always has the same shape, whatever the key: that's what we show.
+// Ableton Push pads (8×8), in one of its two note layouts (Push 1, 2 and 3):
+// - "chromatic": each pad to the right is one semitone up, each row up is a fourth
+//   (5 semitones). A chord type always has the same shape, whatever the key.
+// - "inkey": only the notes of the scale. Each pad to the right is the next note of the
+//   scale, each row up is three scale steps higher (a fourth again). No wrong notes, but
+//   a chord borrowed from outside the scale can't be played whole.
 //
 // The grid starts on the tonic (bottom-left pad), like Push does. Pads of the key's scale
 // are lit softly, the tonic stronger, the chord's pads in violet and its bass in blue.
 
-const PUSH_ROW = 5; // semitones between rows
+const PUSH_ROW = 5; // semitones between rows (chromatic layout)
 
 class PushView {
   constructor(canvas) {
@@ -16,6 +19,9 @@ class PushView {
     this.scale = [];  // pitch classes of the key's scale
     this.tonic = 0;
     this.chord = null; // { bass, notes }
+    this.layout = "chromatic";
+    this.steps = [0, 2, 4, 5, 7, 9, 11]; // the scale, in semitones above the tonic
+    this.missing = []; // chord notes (pitch classes) the "inkey" grid doesn't have
     new ResizeObserver(() => this.draw(true)).observe(canvas);
   }
 
@@ -23,11 +29,23 @@ class PushView {
   // progression, starting on the tonic an octave below the lowest chord note.
   setProgression(tonic, minor, voicings) {
     this.tonic = tonic;
-    const steps = minor ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
-    this.scale = steps.map((s) => (tonic + s) % 12);
+    this.steps = minor ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
+    this.scale = this.steps.map((s) => (tonic + s) % 12);
     const low = Math.min(...voicings.flatMap((v) => v.notes)) - 12;
     this.base = low - ((low - tonic) % 12 + 12) % 12;
     this.draw();
+  }
+
+  setLayout(layout) {
+    this.layout = layout;
+    this.draw();
+  }
+
+  // The note of the pad on row r (0 = bottom), column c (0 = left).
+  pitchAt(r, c) {
+    if (this.layout !== "inkey") return this.base + r * PUSH_ROW + c;
+    const d = r * 3 + c; // scale steps above the tonic
+    return this.base + 12 * Math.floor(d / 7) + this.steps[d % 7];
   }
 
   show(voicing) {
@@ -38,15 +56,15 @@ class PushView {
   // The pads to light for a chord: each chord note can sit on several pads; take the
   // most compact group (smallest box), so it looks like the shape you'd play.
   shape(voicing) {
-    const notes = [...new Set(voicing.notes)];
     const where = (p) => {
       const spots = [];
-      for (let r = 0; r < 8; r++) {
-        const c = p - this.base - r * PUSH_ROW;
-        if (c >= 0 && c < 8) spots.push([r, c]);
-      }
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (this.pitchAt(r, c) === p) spots.push([r, c]);
       return spots;
     };
+    // Notes with no pad (outside the scale, in the "inkey" layout) are left out.
+    const all = [...new Set(voicing.notes)];
+    const notes = all.filter((p) => where(p).length);
+    this.missing = [...new Set(all.filter((p) => !where(p).length).map((p) => p % 12))];
     let best = null, bestSize = Infinity;
     const pick = (i, chosen) => {
       if (i === notes.length) {
@@ -63,14 +81,14 @@ class PushView {
     let bass = null;
     for (let r = 0; r < 8 && !bass; r++) {
       for (let c = 0; c < 8; c++) {
-        if ((this.base + r * PUSH_ROW + c) % 12 === bassPc) { bass = [r, c]; break; }
+        if (this.pitchAt(r, c) % 12 === bassPc) { bass = [r, c]; break; }
       }
     }
     return { pads: best || [], bass };
   }
 
   draw(force = false) {
-    const key = JSON.stringify([this.chord, this.scale, this.base, this.canvas.clientWidth]);
+    const key = JSON.stringify([this.chord, this.scale, this.base, this.layout, this.canvas.clientWidth]);
     if (!force && key === this.state) return;
     this.state = key;
     const { canvas, g } = this;
@@ -93,7 +111,7 @@ class PushView {
     const x0 = (W - size * 8) / 2;
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
-        const pc = (this.base + r * PUSH_ROW + c) % 12;
+        const pc = this.pitchAt(r, c) % 12;
         let color = "#1b1a26";                   // out of the scale: dark
         if (this.scale.includes(pc)) color = "#34304a"; // in the scale: soft
         if (pc === this.tonic) color = "#4b4470";       // tonic: stronger
