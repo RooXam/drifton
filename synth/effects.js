@@ -17,6 +17,10 @@
 //   slowly ("wow") and trembles quickly ("flutter"): a very short delay whose length
 //   moves, so the sound is read a bit faster, then a bit slower. Plus tape hiss and
 //   duller highs.
+//
+// Each instrument also has its own effect settings, saved with its sound (params.js,
+// "Effects"): how much it sends to the shared reverb and echo (see connect / setSends)
+// and a chorus (class Chorus, below), which lives inside the instrument itself.
 
 class FxBus {
   constructor(ctx, destination) {
@@ -129,6 +133,12 @@ class FxBus {
     return { reverbSend, delaySend };
   }
 
+  // Change the sends made by connect() (e.g. an instrument's sound was edited).
+  setSends(sends, reverb, delay) {
+    this.glide(sends.reverbSend.gain, reverb, 0.1);
+    this.glide(sends.delaySend.gain, delay, 0.1);
+  }
+
   // Move a setting smoothly while the sound runs (no clicks). While the audio is still
   // asleep (page just opened, Play not pressed yet) set it at once: a glide would
   // otherwise play out over the first notes, the filter opening, the echo sliding.
@@ -176,7 +186,12 @@ class FxBus {
 
   updateTone() {
     const v = Math.max(this.warmth, this.tape * 0.8);
-    this.drive.curve = softClip(1 + v * 1.5);
+    // A new curve only when it really changes: Focus music nudges the warmth slowly and
+    // often (its drift), and swapping the curve for an identical one is wasted work.
+    if (this.curveFor === undefined || Math.abs(v - this.curveFor) > 0.02) {
+      this.drive.curve = softClip(1 + v * 1.5);
+      this.curveFor = v;
+    }
     const cutoff = Math.min(14000 - this.warmth * 10000, 12000 - this.tape * 8000);
     this.glide(this.tone.frequency, cutoff, 0.1);
   }
@@ -185,6 +200,67 @@ class FxBus {
   setPulse(depth, rate) {
     this.glide(this.lfoDepth.gain, depth * 0.5, 0.2);
     this.glide(this.lfo.frequency, rate, 0.2);
+  }
+}
+
+// Chorus: the classic way to make one instrument sound like several playing together.
+// The sound is copied into two very short delays (around 15 ms), one heard on the left,
+// one on the right. A slow sine makes their length swing back and forth, which bends
+// the pitch of the copy a tiny bit up, then down: mixed with the original, the copies
+// beat against it and the sound gets wide and shimmering. The right side swings the
+// other way (inverted sine), so left and right never match: that is the stereo.
+//
+//   input ─┬───────────────── dry ─────────────┬─► output
+//          ├─► delay L ─► pan left ─┐          │
+//          └─► delay R ─► pan right ┴─► wet ───┘
+//                ▲ +sine   ▲ −sine
+//
+// Cheap on purpose (one oscillator, two delays, a few gains), so every instrument can
+// have one even on a phone; a Synth only builds it when its chorus is above zero.
+class Chorus {
+  constructor(ctx) {
+    this.ctx = ctx;
+    this.input = ctx.createGain();
+    this.output = ctx.createGain();
+    this.dry = ctx.createGain();
+    this.wet = ctx.createGain();
+    this.wet.gain.value = 0; // fades in from silence: switching it on does not click
+    this.input.connect(this.dry).connect(this.output);
+
+    this.lfo = ctx.createOscillator();
+    this.lfo.frequency.value = 0.4; // one swing every 2.5 s: lush, not seasick
+    const depthL = ctx.createGain(), depthR = ctx.createGain();
+    depthL.gain.value = 0.0025;     // ±2.5 ms of delay ≈ ±0.6 % of pitch at its fastest
+    depthR.gain.value = -0.0025;
+    this.lfo.connect(depthL);
+    this.lfo.connect(depthR);
+
+    this.nodes = [this.lfo, depthL, depthR];
+    for (const [side, depth, base] of [[-1, depthL, 0.013], [1, depthR, 0.017]]) {
+      const delay = ctx.createDelay(0.05);
+      delay.delayTime.value = base; // a gain added to it moves it around this value
+      depth.connect(delay.delayTime);
+      const pan = ctx.createStereoPanner();
+      pan.pan.value = side * 0.9;
+      this.input.connect(delay).connect(pan).connect(this.wet);
+      this.nodes.push(delay, pan);
+    }
+    this.wet.connect(this.output);
+    this.lfo.start();
+  }
+
+  // 0 = off (only the dry sound), 1 = thick. The dry sound dips a little as the copies
+  // come in, so turning the chorus up widens the sound more than it makes it louder.
+  set(amount) {
+    const t = this.ctx.currentTime;
+    this.wet.gain.setTargetAtTime(amount * 0.6, t, 0.05);
+    this.dry.gain.setTargetAtTime(1 - amount * 0.3, t, 0.05);
+  }
+
+  // Unplug everything and stop the oscillator (the chorus was turned back to zero).
+  dispose() {
+    this.lfo.stop();
+    for (const n of [this.input, this.dry, this.wet, this.output, ...this.nodes]) n.disconnect();
   }
 }
 

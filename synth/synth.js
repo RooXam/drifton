@@ -24,7 +24,11 @@ class Synth {
     this.volume.gain.value = params.volume;
     this.input.connect(this.volume);
     this.volume.connect(destination);
-    // Later steps (effects) will be inserted between `input` and `volume`.
+    // The instrument's own effect (a chorus, see effects.js) goes between `input` and
+    // `volume`, only while it is turned up. Its reverb and echo sends ("fx.reverb",
+    // "fx.delay") are wired by the page, which owns the shared effects (FxBus).
+    this.chorus = null;
+    this.applyChorus();
 
     this.noiseBuffers = makeNoiseBuffers(ctx);
     // LFOs belong to the instrument, not to a note: all voices move together.
@@ -80,8 +84,28 @@ class Synth {
 
   applyAll() {
     setParam(this.ctx, this.volume.gain, this.params.volume, true);
+    this.applyChorus();
     this.applyLfos();
     for (const v of this.voices) v.update(this.params, true);
+  }
+
+  // Build the chorus the first time it is turned up; take it out again at zero, so an
+  // instrument without chorus costs nothing. Its dry path has no delay, so plugging it
+  // in or out does not click. (Pages that don't load effects.js simply have no chorus.)
+  applyChorus() {
+    const amount = this.params["fx.chorus"] || 0;
+    if (amount > 0 && !this.chorus && typeof Chorus !== "undefined") {
+      this.chorus = new Chorus(this.ctx);
+      this.input.disconnect(this.volume);
+      this.input.connect(this.chorus.input);
+      this.chorus.output.connect(this.volume);
+    } else if (amount <= 0 && this.chorus) {
+      this.input.disconnect(this.chorus.input);
+      this.input.connect(this.volume);
+      this.chorus.dispose();
+      this.chorus = null;
+    }
+    if (this.chorus) this.chorus.set(amount);
   }
 
   applyLfos() {

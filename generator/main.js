@@ -6,24 +6,26 @@ const master = new MasterBus(ctx);
 master.input.gain.value = 0.8;
 const fx = new FxBus(ctx, master.input); // ../synth/effects.js: reverb, echo, warmth, pulse
 
-// reverb / delay: how much of each instrument goes to the room and to the echo.
 const ROLES = [
-  { id: "pad", name: "Pad", patch: "Pad", volume: 1, reverb: 0.45, delay: 0.08 },
-  { id: "bass", name: "Bass", patch: "Bass", volume: 0.6, reverb: 0.12, delay: 0 },
-  { id: "keys", name: "Keys", patch: "Keys", volume: 0.55, reverb: 0.45, delay: 0.32 },
-  { id: "bells", name: "Bells", patch: "Bells", volume: 0.75, reverb: 0.6, delay: 0.45 },
-  { id: "texture", name: "Texture", patch: "Texture", volume: 0.35, reverb: 0.5, delay: 0.1 },
+  { id: "pad", name: "Pad", patch: "Pad", volume: 1 },
+  { id: "bass", name: "Bass", patch: "Bass", volume: 0.6 },
+  { id: "keys", name: "Keys", patch: "Keys", volume: 0.55 },
+  { id: "bells", name: "Bells", patch: "Bells", volume: 0.75 },
+  { id: "texture", name: "Texture", patch: "Texture", volume: 0.35 },
 ];
 
-// Each instrument uses the sound saved on the synth page (or its starter sound).
-// The volume is the generator's own mix, not part of the sound. After each synth, a
-// "layer" gain lets the conductor fade the instrument in and out.
-const synths = {}, layers = {};
+// Each instrument uses the sound saved on the synth page (or its starter sound), with
+// its own effects: chorus inside the synth, and how much goes to the room and the echo
+// (the sound's "fx.reverb" / "fx.delay"). The volume is the generator's own mix, not
+// part of the sound. After each synth, a "layer" gain lets the conductor fade the
+// instrument in and out.
+const synths = {}, layers = {}, sends = {};
 for (const r of ROLES) {
+  const patch = currentPatch(r.patch);
   layers[r.id] = ctx.createGain();
   layers[r.id].connect(fx.input);
-  fx.connect(layers[r.id], r.reverb, r.delay);
-  synths[r.id] = new Synth(ctx, { ...currentPatch(r.patch), volume: r.volume }, layers[r.id]);
+  sends[r.id] = fx.connect(layers[r.id], patch["fx.reverb"], patch["fx.delay"]);
+  synths[r.id] = new Synth(ctx, { ...patch, volume: r.volume }, layers[r.id]);
 }
 synths.keys.maxVoices = 14; // arpeggio notes ring over each other
 
@@ -32,6 +34,7 @@ PatchStore.onChange(() => {
   for (const r of ROLES) {
     const s = synths[r.id];
     s.loadPatch({ ...currentPatch(r.patch), volume: s.params.volume });
+    fx.setSends(sends[r.id], s.params["fx.reverb"], s.params["fx.delay"]);
   }
 });
 

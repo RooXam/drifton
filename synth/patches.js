@@ -1,5 +1,8 @@
 // Starter sounds, one per instrument. Each patch only lists what differs from the
 // defaults in params.js; makePatch fills in the rest.
+// "fx.reverb" / "fx.delay": how much each one sends to the room and the echo (the mix
+// Focus music always used). A sound saved before these existed gets them from here,
+// so it keeps sounding the same.
 
 const STARTER_PATCHES = {
   // Warm and soft: detuned triangles (much gentler than saws) through a low filter that
@@ -8,6 +11,7 @@ const STARTER_PATCHES = {
   // breathes. Not too dark or too much sub: phone speakers play almost nothing below
   // 300 Hz, and a pad living down there disappears on them.
   Pad: {
+    "fx.reverb": 0.45, "fx.delay": 0.08,
     "a.wave": "triangle", "a.unison": 5, "a.spread": 12, "a.level": 0.6,
     "b.wave": "sine", "b.octave": -1, "b.level": 0.3,
     "noise.level": 0.025,
@@ -22,6 +26,7 @@ const STARTER_PATCHES = {
   // that barely opens, and an attack of a few tens of milliseconds so the note swells in
   // instead of clicking (on small speakers you hear the attack, not the low end).
   Bass: {
+    "fx.reverb": 0.12, "fx.delay": 0,
     "a.wave": "triangle", "a.octave": -1, "a.unison": 1, "a.spread": 0, "a.width": 0, "a.level": 0.55,
     "b.wave": "sine", "b.octave": -2, "b.level": 0.75,
     "noise.level": 0,
@@ -35,6 +40,7 @@ const STARTER_PATCHES = {
   // Bell-like: pure sines, instant attack, sustain at 0 so the note dies away on its own.
   // Osc B is a quiet sine a fifth above.
   Bells: {
+    "fx.reverb": 0.6, "fx.delay": 0.45,
     "a.wave": "sine", "a.octave": 1, "a.unison": 1, "a.spread": 0, "a.width": 0, "a.level": 0.7,
     "b.wave": "sine", "b.octave": 0, "b.semi": 7, "b.level": 0.15,
     "noise.level": 0,
@@ -50,6 +56,7 @@ const STARTER_PATCHES = {
   // A soft "felt piano": a sine with a quiet triangle an octave up, struck (instant
   // attack, no sustain: the note dies away on its own), the filter closing as it fades.
   Keys: {
+    "fx.reverb": 0.45, "fx.delay": 0.32,
     "a.wave": "sine", "a.octave": 0, "a.unison": 1, "a.spread": 0, "a.width": 0, "a.level": 0.75,
     "b.wave": "triangle", "b.octave": 1, "b.unison": 1, "b.level": 0.16,
     "noise.level": 0,
@@ -63,6 +70,7 @@ const STARTER_PATCHES = {
 
   // Mostly noise through a narrow band-pass filter that drifts around: wind, air.
   Texture: {
+    "fx.reverb": 0.5, "fx.delay": 0.1,
     "a.unison": 7, "a.spread": 40, "a.width": 1, "a.level": 0.15,
     "b.level": 0,
     "noise.color": "pink", "noise.level": 0.8,
