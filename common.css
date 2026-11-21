@@ -94,6 +94,28 @@ h2 {
 }
 .help { margin: -0.3rem 0 0; color: var(--muted); font-size: 0.875rem; line-height: 1.5; max-width: 68ch; }
 
+/* Folding sections: a title you tap to open or close what is under it */
+details.fold { border-top: 1px solid var(--rule); padding-top: 1.1rem; }
+details.fold > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  border-radius: 8px;
+}
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::after { /* a chevron: down when closed, up when open */
+  content: "";
+  width: 9px; height: 9px;
+  margin-right: 6px;
+  border-right: 1.6px solid var(--muted);
+  border-bottom: 1.6px solid var(--muted);
+  transform: translateY(-3px) rotate(45deg);
+  transition: transform 0.2s ease;
+}
+details.fold[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+details.fold > summary:hover::after { border-color: var(--fg); }
+.fold-body { display: flex; flex-direction: column; gap: 0.9rem; padding-top: 1rem; }
+
 /* Transport: the instrument, on its panel */
 .transport {
   flex-direction: row;

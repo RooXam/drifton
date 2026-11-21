@@ -1,4 +1,5 @@
-// Visualizer: a slow drift through an abstract sky in space that moves with the music.
+// Visualizer: a slow drift through an abstract sky, half outer space, half Kandinsky
+// painting, that moves with the music.
 //
 // A simple 3D: every object has a position (x, y, z), z being its distance ahead. To
 // draw it, divide by z (perspective): the farther, the smaller and the closer to the
@@ -6,22 +7,27 @@
 // across the sky come towards us and slide past, at their own depth.
 //
 // - Far behind everything, a few large soft clouds of colour (nebulae) drift slowly.
-// - Stars and dust everywhere.
-// - Shapes appear in the distance, anywhere in the sky, and come closer: halos of
-//   circles, rings seen at an angle, circles of dots, spirals, small suns, glowing orbs.
-//   A chord change brings a new, larger one.
-// - Each bell or piano note becomes a glow, placed by its pitch.
-// - Feedback: each frame starts from the previous one, barely enlarged and faded, which
-//   leaves soft trails, as in old video synthesizers.
+// - Stars everywhere.
+// - Each instrument makes its own shapes when it plays (see catchNotes): the pad circles
+//   within circles and planets, the bass bundles of lines, the texture wireframe boxes and
+//   pyramids turning in 3D, the bells and piano glows; crescents, triangles and small
+//   planets come on their own. Corners and lines tremble and stretch with the sound.
+// - Feedback: each frame starts from the previous one, slightly enlarged, turned and
+//   faded: everything leaves trails that stream out from the centre and shimmer.
 // - The colour follows the chord, gliding slowly; the Tape setting adds film grain, a
 //   wobble and washed-out colours.
 //
-// Nothing flashes: every change is smoothed over a second or more. The 16 Hz pulse of the
-// sound is deliberately not shown (fast flicker is tiring, even harmful, to watch).
+// Nothing flashes: every change is smoothed over a second or more, and the trembling is
+// slow (about once a second). The 16 Hz pulse of the sound is deliberately not shown
+// (fast flicker is tiring, even harmful, to watch).
 
 const FAR = 16, NEAR = 0.4; // what we see, in world units ahead of the camera
 const SKY_W = 9, SKY_H = 6; // how wide the field of shapes is, around us
-const SHAPES = ["halo", "ring", "dots", "spiral", "sun", "orb"];
+// Each instrument has its shapes (see catchNotes); these appear on their own, now and then.
+const AMBIENT = ["crescent", "triangle", "planet"];
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+// Colours besides the chord's violets: an ochre and a blue-green, as in Kandinsky, kept soft.
+const PAINT = [null, null, null, 38, 188];
 
 class Visualizer {
   constructor(canvas, analyser, gen, fx) {
@@ -39,21 +45,24 @@ class Visualizer {
     this.hue = 265;
     this.cam = { x: 0, y: 0, z: 0 }; // where we are; z = how far we have travelled
     this.speed = 0.15;
+    this.t = 0; // seconds since the page opened (drives the slow animations)
     this.stars = Array.from({ length: 160 }, () => this.newStar(NEAR + Math.random() * FAR));
-    // A few shapes already there at the start, at all depths.
     this.things = [];
-    for (let i = 0; i < 9; i++) this.spawn(false, 2 + Math.random() * (FAR - 2));
+    // A few shapes already there at the start, at all depths.
+    for (const kind of [...AMBIENT, ...AMBIENT, "circles", "planet", "lines", "box"]) {
+      this.spawn({ kind, d: 2 + Math.random() * (FAR - 2), low: kind === "lines" });
+    }
+    for (const o of this.things) o.born = -99; // there from the start: no fade-in
     this.nebulae = Array.from({ length: 3 }, (_, i) => ({
       x: (Math.random() - 0.5) * 1.4, y: (Math.random() - 0.5) * 0.9,
       r: 0.35 + Math.random() * 0.3, hueShift: -25 + i * 25, phase: Math.random() * 6,
     }));
     this.seen = new WeakSet();
-    this.chordCount = 0;
-    this.nextShape = 1;
+    this.lastSpawn = {}; // when each instrument last made a shape (audio time)
+    this.nextShape = 3;
     this.grain = this.makeGrain();
     this.still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.last = performance.now();
-    this.t = 0;
   }
 
   newStar(z) {
@@ -127,32 +136,88 @@ class Visualizer {
     return Math.max(0, Math.min(1, (FAR - d) / (FAR * 0.5)) * Math.min(1, (d - NEAR) / 1.2));
   }
 
-  // A new shape somewhere in the sky, far ahead (or at depth d). Never right in front of
-  // us: we drift between the shapes, not into them.
-  spawn(big = false, d = FAR) {
+  // A shape's colour: the chord's hue shifted, or one of the painter's colours.
+  colour(o, light, alpha) {
+    const h = o.paint ?? this.hue + o.hueShift;
+    return `hsl(${h} ${o.sat - (this.fx.tape || 0) * 20}% ${light}% / ${alpha})`;
+  }
+
+  // A new shape somewhere in the sky, at depth d. Never right in front of us (we drift
+  // between the shapes, not into them); low = in the lower part of the sky.
+  spawn({ kind, big = false, d = FAR, low = false }) {
     let x, y;
     do {
       x = (Math.random() - 0.5) * SKY_W;
-      y = (Math.random() - 0.5) * SKY_H;
-    } while (Math.hypot(x, y * 1.4) < 0.8);
-    this.things.push({
-      kind: SHAPES[Math.floor(Math.random() * SHAPES.length)],
-      x: this.cam.x + x, y: this.cam.y + y, z: this.cam.z + d,
-      rot: Math.random() * Math.PI * 2, spin: (Math.random() - 0.5) * 0.3,
-      tilt: 0.25 + Math.random() * 0.6, // rings are seen at an angle: ellipses
-      hueShift: (Math.random() - 0.5) * 50, size: (big ? 1.3 : 0.5) + Math.random() * 0.5,
-    });
+      y = low ? 0.7 + Math.random() * SKY_H * 0.35 : (Math.random() - 0.5) * SKY_H;
+    } while (Math.hypot(x, y * 1.4) < 0.9);
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const o = {
+      kind, x: this.cam.x + x, y: this.cam.y + y, z: this.cam.z + d, born: this.t,
+      size: (big ? 1.3 : 0.6) * rnd(0.8, 1.3), seed: Math.random() * 100,
+      rot: rnd(0, 6.28), spin: rnd(-0.25, 0.25),
+      rx: rnd(0, 6.28), ry: rnd(0, 6.28), drx: rnd(-0.3, 0.3), dry: rnd(-0.4, 0.4),
+      hueShift: rnd(-45, 45), paint: PAINT[Math.floor(Math.random() * PAINT.length)], sat: rnd(35, 55),
+      tilt: rnd(0.2, 0.5), ringed: Math.random() < 0.5,
+    };
+    // Wireframes: corners and the edges joining them.
+    if (kind === "box") {
+      const [a, b, c] = [rnd(0.25, 0.6), rnd(0.25, 0.6), rnd(0.25, 0.6)];
+      o.verts = [];
+      for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) o.verts.push([sx * a, sy * b, sz * c]);
+      o.edges = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+    } else if (kind === "pyramid") {
+      const a = rnd(0.3, 0.55), h = rnd(0.45, 0.8);
+      o.verts = [[-a, h / 2, -a], [a, h / 2, -a], [a, h / 2, a], [-a, h / 2, a], [0, -h / 2, 0]];
+      o.edges = [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [1, 4], [2, 4], [3, 4]];
+    } else if (kind === "lines") {
+      o.lines = Array.from({ length: 3 + Math.floor(Math.random() * 3) }, () => ({
+        angle: rnd(0, Math.PI), len: rnd(0.5, 1.4), width: rnd(0.004, 0.03), off: rnd(-0.25, 0.25),
+      }));
+    }
+    this.things.push(o);
   }
 
+  // Each instrument has its own shapes, born when it plays (not too close in time):
+  // - pad: circles within circles or a planet, large, at each new chord;
+  // - bass: a bundle of lines, low in the sky;
+  // - texture: a wireframe box or pyramid;
+  // - bells and piano: glows around the centre at the angle of the note's name (C at the
+  //   top), whatever the octave.
+  // A muted instrument, or one faded out by the conductor, makes nothing.
   catchNotes(now) {
+    const gap = { pad: 1.5, bass: 0.4, texture: 2 };
     for (const n of this.gen.notes) {
       if (this.seen.has(n) || n.start > now) continue;
       this.seen.add(n);
-      if ((n.role !== "bells" && n.role !== "keys") || now - n.start > 0.5) continue;
-      const a = ((n.note % 12) / 12) * Math.PI * 2;
-      this.things.push({ kind: "note", x: this.cam.x + Math.cos(a) * 1.6, y: this.cam.y + Math.sin(a) * 1.1,
-        z: this.cam.z + 6 + Math.random() * 3, size: n.role === "bells" ? 1 : 0.6 });
+      const r = n.role;
+      if (now - n.start > 0.5 || this.gen.inLayer?.[r] === false) continue;
+      if (r === "bells" || r === "keys") {
+        const ang = ((n.note % 12) / 12) * Math.PI * 2 - Math.PI / 2;
+        this.things.push({ kind: "note", x: this.cam.x + Math.cos(ang) * 1.6, y: this.cam.y + Math.sin(ang) * 1.1,
+          z: this.cam.z + 7, size: r === "bells" ? 1 : 0.7, born: this.t });
+        continue;
+      }
+      if (n.start - (this.lastSpawn[r] ?? -99) < gap[r]) continue;
+      this.lastSpawn[r] = n.start;
+      const d = 7 + Math.random() * 4; // close enough to be seen soon after the sound
+      if (r === "pad") this.spawn({ kind: pick(["circles", "circles", "planet"]), big: true, d });
+      if (r === "bass") this.spawn({ kind: "lines", low: true, d });
+      if (r === "texture") this.spawn({ kind: pick(["box", "pyramid"]), d });
     }
+  }
+
+  // Corners of a wireframe after turning it in 3D and letting it tremble with the sound.
+  corners(o, t, shake) {
+    const [cx, sx] = [Math.cos(o.rx), Math.sin(o.rx)], [cy, sy] = [Math.cos(o.ry), Math.sin(o.ry)];
+    const stretch = 1 + Math.sin(t * 1.3 + o.seed) * this.level.low * 0.18;
+    return o.verts.map(([x, y, z], i) => {
+      x *= stretch;
+      x += Math.sin(t * 6 + i * 1.7 + o.seed) * shake;
+      y += Math.cos(t * 5 + i * 2.3 + o.seed) * shake;
+      const y1 = y * cx - z * sx, z1 = y * sx + z * cx; // turn around x
+      const x2 = x * cy + z1 * sy, z2 = -x * sy + z1 * cy; // then around y
+      return this.project(o.x + x2 * o.size, o.y + y1 * o.size, o.z + z2 * o.size);
+    });
   }
 
   draw() {
@@ -171,27 +236,23 @@ class Visualizer {
     const { low, mid, high } = this.level;
     this.hue += (this.chordHue(now) - this.hue) * 0.01;
     const hue = this.hue, sat = 42 - tape * 20;
+    const shake = (mid * 0.6 + high * 0.4) * 0.05; // how much corners and lines tremble
 
-    // Drifting: slowly forward (a little faster with a faster tempo), and sideways along
-    // slow curves, so the sky turns around us.
-    const target = this.gen.running ? 0.25 + (this.gen.bpm - 50) * 0.006 + mid * 0.12 : 0.08;
+    // Drifting: forward (faster with a faster tempo), and sideways along slow curves.
+    const target = this.gen.running ? 0.3 + (this.gen.bpm - 50) * 0.009 + mid * 0.15 : 0.08;
     this.speed += (target * (this.still ? 0.3 : 1) - this.speed) * 0.01;
     const dz = this.speed * dt;
     this.cam.z += dz;
     this.cam.x = Math.sin(this.cam.z * 0.07) * 1.6;
     this.cam.y = Math.cos(this.cam.z * 0.05) * 0.8;
 
-    // New shapes: one every few seconds, a larger one at each chord change.
-    if (this.gen.chords.length !== this.chordCount) {
-      this.chordCount = this.gen.chords.length;
-      if (this.gen.running) this.spawn(true);
-    }
-    this.nextShape -= dt * (0.5 + this.speed);
-    if (this.nextShape <= 0) { this.spawn(); this.nextShape = 2 + Math.random() * 3; }
+    // Shapes from the instruments, and now and then one on its own, far away.
+    this.nextShape -= dt;
+    if (this.nextShape <= 0) { this.spawn({ kind: pick(AMBIENT) }); this.nextShape = 4 + Math.random() * 4; }
     this.catchNotes(now);
     this.things = this.things.filter((o) => o.z - this.cam.z > NEAR);
 
-    // 1. Feedback: the last scene, barely enlarged and faded: soft trails.
+    // 1. Feedback: the last scene, enlarged, turned and faded: trails streaming out.
     let g = scene.getContext("2d");
     const b = buf.getContext("2d");
     b.clearRect(0, 0, W, H);
@@ -203,9 +264,10 @@ class Visualizer {
     if (!this.still) {
       g.save();
       g.translate(W / 2, H / 2);
-      const z = 1.002 + this.speed * 0.006;
+      const z = 1.005 + this.speed * 0.012 + high * 0.006;
       g.scale(z, z);
-      g.globalAlpha = 0.8;
+      g.rotate(0.0005 + mid * 0.0012);
+      g.globalAlpha = 0.86;
       g.drawImage(buf, -W / 2, -H / 2);
       g.restore();
     }
@@ -213,88 +275,113 @@ class Visualizer {
     g.save();
     g.translate(Math.sin(t * 0.53 * Math.PI * 2) * tape * W * 0.004, 0); // tape wobble
     g.globalCompositeOperation = "lighter";
-    const M = Math.min(W, H);
 
-    // 2. Nebulae: big soft clouds far away, moving only a little (they are so far). Very
-    // faint: what barely moves piles up in the trails (about five times brighter).
+    // 2. Nebulae: big soft clouds far away. Very faint: what barely moves piles up in the
+    // trails (about seven times brighter).
     for (const n of this.nebulae) {
       const x = W / 2 + (n.x - this.cam.x * 0.05) * W + Math.sin(t * 0.03 + n.phase) * W * 0.03;
       const y = H / 2 + (n.y - this.cam.y * 0.05) * H + Math.cos(t * 0.025 + n.phase) * H * 0.03;
       const r = n.r * Math.max(W, H) * (1 + low * 0.05);
       const cloud = g.createRadialGradient(x, y, 0, x, y, r);
-      cloud.addColorStop(0, `hsl(${hue + n.hueShift} ${sat}% 45% / ${0.012 + low * 0.008})`);
+      cloud.addColorStop(0, `hsl(${hue + n.hueShift} ${sat}% 45% / ${0.009 + low * 0.006})`);
       cloud.addColorStop(1, `hsl(${hue + n.hueShift} ${sat}% 30% / 0)`);
       g.fillStyle = cloud;
       g.fillRect(x - r, y - r, r * 2, r * 2);
     }
 
-    // 3. Stars: small points everywhere, twinkling slowly.
+    // 3. Stars, twinkling slowly.
     for (const s of this.stars) {
       if (s.z - this.cam.z < NEAR) Object.assign(s, this.newStar());
       const p = this.project(s.x, s.y, s.z);
       if (!p) continue;
       const tw = 0.6 + 0.4 * Math.sin(t * 0.8 + s.tw);
-      g.fillStyle = `hsl(${hue + 30} 25% 85% / ${this.fog(p.d) * 0.55 * tw})`;
+      g.fillStyle = `hsl(${hue + 30} 25% 85% / ${this.fog(p.d) * 0.5 * tw})`;
       g.beginPath(); g.arc(p.x, p.y, Math.max(0.5, 0.01 * p.k), 0, Math.PI * 2); g.fill();
     }
 
-    // 4. Shapes and note glows, far ones first.
+    // 4. Shapes and notes, far ones first.
     this.things.sort((a, b2) => b2.z - a.z);
     for (const o of this.things) {
       const s = this.project(o.x, o.y, o.z);
       if (!s) continue;
-      const a = this.fog(s.d);
-      const h = hue + (o.hueShift || 30);
-      const R = (o.size || 1) * s.k; // the shape's size on screen
-      o.rot = (o.rot || 0) + (o.spin || 0) * dt;
-      const line = Math.max(0.6, 0.012 * s.k);
+      // Faded in: from the distance, and over its first moments (a shape born close by
+      // must not pop up).
+      const a = this.fog(s.d) * Math.min(1, (t - o.born) / (o.kind === "note" ? 0.4 : 1.5));
+      const R = o.size * s.k; // the shape's size on screen
+      const line = Math.max(0.7, 0.012 * s.k);
+      o.rot += (o.spin || 0) * dt;
+      o.rx += (o.drx || 0) * dt;
+      o.ry += (o.dry || 0) * dt;
+
       if (o.kind === "note") {
         const r = 0.09 * o.size * s.k;
         const dot = g.createRadialGradient(s.x, s.y, 0, s.x, s.y, r);
-        dot.addColorStop(0, `hsl(${hue + 30} 55% 80% / ${a * 0.5})`);
+        dot.addColorStop(0, `hsl(${hue + 30} 55% 82% / ${a * 0.55})`);
         dot.addColorStop(1, `hsl(${hue + 30} 55% 60% / 0)`);
         g.fillStyle = dot;
         g.beginPath(); g.arc(s.x, s.y, r, 0, Math.PI * 2); g.fill();
-      } else if (o.kind === "halo") {
+      } else if (o.kind === "box" || o.kind === "pyramid") {
+        const pts = this.corners(o, t, shake);
+        if (pts.some((p) => !p)) continue;
+        g.strokeStyle = this.colour(o, 70, a * 0.45);
         g.lineWidth = line;
-        for (let i = 1; i <= 4; i++) {
-          g.strokeStyle = `hsl(${h + i * 5} ${sat}% 70% / ${a * (0.3 - i * 0.05) * (0.6 + mid * 0.6)})`;
-          g.beginPath(); g.arc(s.x, s.y, R * i * 0.14, 0, Math.PI * 2); g.stroke();
-        }
-      } else if (o.kind === "ring") {
-        // A planet's ring seen at an angle, around a faint core.
-        g.lineWidth = line * 1.4;
-        g.strokeStyle = `hsl(${h} ${sat}% 70% / ${a * 0.32})`;
-        g.beginPath(); g.ellipse(s.x, s.y, R * 0.6, R * 0.6 * o.tilt, o.rot, 0, Math.PI * 2); g.stroke();
-        const core = g.createRadialGradient(s.x, s.y, 0, s.x, s.y, R * 0.22);
-        core.addColorStop(0, `hsl(${h + 15} ${sat}% 65% / ${a * 0.3})`);
-        core.addColorStop(1, `hsl(${h} ${sat}% 50% / 0)`);
-        g.fillStyle = core;
-        g.beginPath(); g.arc(s.x, s.y, R * 0.22, 0, Math.PI * 2); g.fill();
-      } else if (o.kind === "dots") {
-        g.fillStyle = `hsl(${h} ${sat + 10}% 75% / ${a * 0.42})`;
-        for (let j = 0; j < 24; j++) {
-          const ang = o.rot + (j / 24) * Math.PI * 2;
+        g.beginPath();
+        for (const [i, j] of o.edges) { g.moveTo(pts[i].x, pts[i].y); g.lineTo(pts[j].x, pts[j].y); }
+        g.stroke();
+        g.fillStyle = this.colour(o, 80, a * 0.6);
+        for (const p of pts) { g.beginPath(); g.arc(p.x, p.y, line * 1.6, 0, Math.PI * 2); g.fill(); }
+      } else if (o.kind === "lines") {
+        for (const [i, l] of o.lines.entries()) {
+          const ang = l.angle + o.rot + Math.sin(t * 1.1 + i + o.seed) * shake * 2;
+          const nx = Math.cos(ang), ny = Math.sin(ang);
+          const ox = -ny * l.off * R, oy = nx * l.off * R;
+          const half = (l.len * R) / 2 * (1 + Math.sin(t * 0.9 + i * 2 + o.seed) * mid * 0.15);
+          g.strokeStyle = this.colour({ ...o, hueShift: o.hueShift + i * 12 }, 70, a * 0.5);
+          g.lineWidth = Math.max(0.7, l.width * s.k);
           g.beginPath();
-          g.arc(s.x + Math.cos(ang) * R * 0.45, s.y + Math.sin(ang) * R * 0.45, Math.max(0.6, 0.015 * s.k), 0, Math.PI * 2);
-          g.fill();
+          g.moveTo(s.x + ox - nx * half, s.y + oy - ny * half);
+          g.lineTo(s.x + ox + nx * half, s.y + oy + ny * half);
+          g.stroke();
         }
-      } else if (o.kind === "spiral") {
-        g.fillStyle = `hsl(${h} ${sat + 10}% 75% / ${a * 0.42})`;
-        for (let i = 0; i < 28; i++) {
-          const ang = o.rot + i * 0.55, rr = R * (0.03 + i * 0.014);
-          g.beginPath();
-          g.arc(s.x + Math.cos(ang) * rr, s.y + Math.sin(ang) * rr, Math.max(0.6, 0.012 * s.k), 0, Math.PI * 2);
-          g.fill();
+      } else if (o.kind === "circles") {
+        // Circles within circles, flat and translucent.
+        const breathe = 1 + low * 0.08;
+        [[0.5, 0], [0.33, 35], [0.17, -40]].forEach(([k, shift], i) => {
+          g.fillStyle = this.colour({ ...o, paint: i === 1 && o.paint ? o.paint : null, hueShift: o.hueShift + shift }, 55 + i * 8, a * 0.07);
+          g.beginPath(); g.arc(s.x + i * R * 0.04, s.y - i * R * 0.03, R * k * breathe, 0, Math.PI * 2); g.fill();
+        });
+      } else if (o.kind === "triangle") {
+        g.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const ang = o.rot + (i / 3) * Math.PI * 2;
+          const rr = R * 0.5 * (1 + Math.sin(t * 5 + i * 2 + o.seed) * shake * 3);
+          g[i ? "lineTo" : "moveTo"](s.x + Math.cos(ang) * rr, s.y + Math.sin(ang) * rr);
         }
-      } else if (o.kind === "sun" || o.kind === "orb") {
-        const r = R * (o.kind === "sun" ? 0.4 : 0.15) * (1 + low * 0.1);
-        const glow = g.createRadialGradient(s.x, s.y, 0, s.x, s.y, r);
-        glow.addColorStop(0, `hsl(${h + 20} ${sat}% 72% / ${a * 0.32})`);
-        glow.addColorStop(0.35, `hsl(${h + 10} ${sat}% 55% / ${a * 0.14})`);
-        glow.addColorStop(1, `hsl(${h} ${sat}% 40% / 0)`);
-        g.fillStyle = glow;
+        g.closePath();
+        g.fillStyle = this.colour(o, 55, a * 0.12);
+        g.fill();
+        g.strokeStyle = this.colour(o, 72, a * 0.45);
+        g.lineWidth = line;
+        g.stroke();
+      } else if (o.kind === "planet") {
+        const r = R * 0.32;
+        const shade = g.createRadialGradient(s.x - r * 0.35, s.y - r * 0.35, r * 0.1, s.x, s.y, r);
+        shade.addColorStop(0, this.colour(o, 70, a * 0.22));
+        shade.addColorStop(1, this.colour(o, 35, a * 0.05));
+        g.fillStyle = shade;
         g.beginPath(); g.arc(s.x, s.y, r, 0, Math.PI * 2); g.fill();
+        if (o.ringed) {
+          g.strokeStyle = this.colour(o, 72, a * 0.35);
+          g.lineWidth = line;
+          g.beginPath(); g.ellipse(s.x, s.y, r * 1.8, r * 1.8 * o.tilt, o.rot * 0.3, 0, Math.PI * 2); g.stroke();
+        }
+      } else if (o.kind === "crescent") {
+        const r = R * 0.3;
+        g.beginPath();
+        g.arc(s.x, s.y, r, 0, Math.PI * 2);
+        g.arc(s.x + r * 0.38 * Math.cos(o.rot), s.y + r * 0.38 * Math.sin(o.rot), r * 0.88, 0, Math.PI * 2, true);
+        g.fillStyle = this.colour(o, 75, a * 0.4);
+        g.fill("evenodd");
       }
     }
     g.restore();
@@ -316,7 +403,7 @@ class Visualizer {
     g.fillStyle = "#000";
     for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
     g.globalAlpha = 1;
-    const vignette = g.createRadialGradient(W / 2, H / 2, M * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
+    const vignette = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
     vignette.addColorStop(0, "rgb(4 2 10 / 0)");
     vignette.addColorStop(1, "rgb(4 2 10 / 0.75)");
     g.fillStyle = vignette;

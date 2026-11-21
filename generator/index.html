@@ -31,66 +31,80 @@
     </div>
   </section>
 
-  <div class="visual" id="visual">
-    <canvas id="visual-canvas" aria-label="An abstract picture moving with the music"></canvas>
-    <button class="v-btn v-play" id="v-play" aria-label="Play / Stop">
-      <svg viewBox="0 0 24 24"><path class="play-path" d="M8 5v14l11-7z"/></svg>
-    </button>
-    <button class="v-btn v-full" id="v-full" aria-label="Full screen">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path class="v-full-path" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-    </button>
-  </div>
-
   <section>
     <h2>Mood</h2>
     <div class="seg moods" id="moods"></div>
     <p class="help" id="mood-help"></p>
   </section>
 
-  <section>
-    <canvas id="roll"></canvas>
-    <div class="legend" id="legend"></div>
-  </section>
+  <details class="fold" data-fold="visual" open>
+    <summary><h2>Visual</h2></summary>
+    <div class="fold-body">
+      <div class="visual" id="visual">
+        <canvas id="visual-canvas" aria-label="An abstract picture moving with the music"></canvas>
+        <button class="v-btn v-play" id="v-play" aria-label="Play / Stop">
+          <svg viewBox="0 0 24 24"><path class="play-path" d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="v-btn v-full" id="v-full" aria-label="Full screen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path class="v-full-path" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+      </div>
+    </div>
+  </details>
 
-  <section>
-    <h2>Harmony</h2>
-    <label class="row"><span>Key</span><select id="key"></select></label>
-    <label class="row"><span>Mode</span>
-      <select id="mode">
-        <option value="lydian">Lydian (floating)</option>
-        <option value="ionian">Ionian (major)</option>
-        <option value="mixolydian">Mixolydian (warm)</option>
-        <option value="dorian" selected>Dorian (soft minor)</option>
-        <option value="aeolian">Aeolian (melancholic)</option>
-        <option value="phrygian">Phrygian (dark)</option>
-      </select>
-    </label>
-    <label class="row"><span>Tempo</span><input type="range" id="bpm" min="50" max="110" value="72"><output id="bpm-out"></output></label>
-    <label class="row"><span>Chord length</span><input type="range" id="chord-len" min="6" max="60" value="20"><output id="chord-len-out"></output></label>
-    <p class="help">Key and mode changes apply from the next chord. Chords change at the start of a bar.</p>
-  </section>
+  <details class="fold" data-fold="notes">
+    <summary><h2>Notes</h2></summary>
+    <div class="fold-body">
+      <canvas id="roll"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+  </details>
 
-  <section>
-    <h2>Instruments</h2>
-    <div id="roles"></div>
-    <label class="row"><span>Movement</span><input type="range" id="movement" min="0" max="100" value="45"><output id="movement-out"></output></label>
-    <label class="row"><span>Bell density</span><input type="range" id="density" min="0" max="100" value="35"><output id="density-out"></output></label>
-    <label class="row check"><input type="checkbox" id="evolve" checked> <span>Layers come and go (keys, bells, texture fade in and out every few bars)</span></label>
-    <p class="help">Movement: how much the keys and the bass play in rhythm (0 = held chords only).
-      Edit opens the instrument on the synth page in a new tab: your changes are heard here right away.</p>
-  </section>
+  <details class="fold" data-fold="harmony">
+    <summary><h2>Harmony</h2></summary>
+    <div class="fold-body">
+      <label class="row"><span>Key</span><select id="key"></select></label>
+      <label class="row"><span>Mode</span>
+        <select id="mode">
+          <option value="lydian">Lydian (floating)</option>
+          <option value="ionian">Ionian (major)</option>
+          <option value="mixolydian">Mixolydian (warm)</option>
+          <option value="dorian" selected>Dorian (soft minor)</option>
+          <option value="aeolian">Aeolian (melancholic)</option>
+          <option value="phrygian">Phrygian (dark)</option>
+        </select>
+      </label>
+      <label class="row"><span>Tempo</span><input type="range" id="bpm" min="50" max="110" value="72"><output id="bpm-out"></output></label>
+      <label class="row"><span>Chord length</span><input type="range" id="chord-len" min="6" max="60" value="20"><output id="chord-len-out"></output></label>
+      <p class="help">Key and mode changes apply from the next chord. Chords change at the start of a bar.</p>
+    </div>
+  </details>
 
-  <section>
-    <h2>Sound</h2>
-    <label class="row"><span>Space</span><input type="range" id="space" min="0" max="100" value="35"><output id="space-out"></output></label>
-    <label class="row"><span>Echo</span><input type="range" id="echo" min="0" max="100" value="22"><output id="echo-out"></output></label>
-    <label class="row"><span>Warmth</span><input type="range" id="warmth" min="0" max="100" value="55"><output id="warmth-out"></output></label>
-    <label class="row"><span>Tape</span><input type="range" id="tape" min="0" max="100" value="10"><output id="tape-out"></output></label>
-    <label class="row"><span>Pulse</span><input type="range" id="pulse" min="0" max="60" value="18"><output id="pulse-out"></output></label>
-    <p class="help">Space: the room (reverb). Echo: repeats in time with the tempo. Warmth: softer
-      highs and a gentle saturation. Tape: an old cassette, the pitch slowly wobbling, hiss. Pulse: the volume shimmers several times a second, like
-      Brain.fm's focus music (16 Hz for focus, slower for calm); keep it subtle.</p>
-  </section>
+  <details class="fold" data-fold="instruments">
+    <summary><h2>Instruments</h2></summary>
+    <div class="fold-body">
+      <div id="roles"></div>
+      <label class="row"><span>Movement</span><input type="range" id="movement" min="0" max="100" value="45"><output id="movement-out"></output></label>
+      <label class="row"><span>Bell density</span><input type="range" id="density" min="0" max="100" value="35"><output id="density-out"></output></label>
+      <label class="row check"><input type="checkbox" id="evolve" checked> <span>Layers come and go (keys, bells, texture fade in and out every few bars)</span></label>
+      <p class="help">Movement: how much the keys and the bass play in rhythm (0 = held chords only).
+        Edit opens the instrument on the synth page in a new tab: your changes are heard here right away.</p>
+    </div>
+  </details>
+
+  <details class="fold" data-fold="sound">
+    <summary><h2>Sound</h2></summary>
+    <div class="fold-body">
+      <label class="row"><span>Space</span><input type="range" id="space" min="0" max="100" value="35"><output id="space-out"></output></label>
+      <label class="row"><span>Echo</span><input type="range" id="echo" min="0" max="100" value="22"><output id="echo-out"></output></label>
+      <label class="row"><span>Warmth</span><input type="range" id="warmth" min="0" max="100" value="55"><output id="warmth-out"></output></label>
+      <label class="row"><span>Tape</span><input type="range" id="tape" min="0" max="100" value="10"><output id="tape-out"></output></label>
+      <label class="row"><span>Pulse</span><input type="range" id="pulse" min="0" max="60" value="18"><output id="pulse-out"></output></label>
+      <p class="help">Space: the room (reverb). Echo: repeats in time with the tempo. Warmth: softer
+        highs and a gentle saturation. Tape: an old cassette, the pitch slowly wobbling, hiss. Pulse: the volume shimmers several times a second, like
+        Brain.fm's focus music (16 Hz for focus, slower for calm); keep it subtle.</p>
+    </div>
+  </details>
 
   <section>
     <div class="seg"><button id="reset">Reset all settings</button></div>

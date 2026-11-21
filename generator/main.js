@@ -45,9 +45,16 @@ const colors = Object.fromEntries(ROLES.map((r) => [r.id, css.getPropertyValue(`
 // ---- Settings, remembered in the browser ----
 
 const SAVE_KEY = "drifton.focus.v1";
-const prefs = { mood: "auto", key: 2, volume: 80, evolve: true, volumes: {}, on: {} };
+const prefs = { mood: "auto", key: 2, volume: 80, evolve: true, volumes: {}, on: {}, open: {} };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}); } catch {}
 const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(prefs)); } catch {} };
+
+// Folding sections: remember which ones are open.
+document.querySelectorAll("details.fold").forEach((d) => {
+  const k = d.dataset.fold;
+  if (prefs.open[k] !== undefined) d.open = prefs.open[k];
+  d.addEventListener("toggle", () => { prefs.open[k] = d.open; save(); });
+});
 
 // Forget every saved setting and start again from the defaults.
 document.getElementById("reset").addEventListener("click", () => {

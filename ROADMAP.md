@@ -12,7 +12,8 @@ Musique fonctionnelle composée en direct pour se concentrer ou se détendre.
 - [x] Effets : réverbe, écho calé sur le tempo, chaleur (saturation douce, aigus adoucis), bande (hauteur qui ondule, souffle), pulsation (modulation d'amplitude, 16 Hz pour la concentration).
 - [x] Ambiances : Deep focus, Flow, Calm, Night, Hazy (bande usée, accords sus, riff répété ; « Music has the right to drift »), Drone (un accord ouvert tenu, sans rythme ; remplace l'ancien outil Drone), et Auto qui suit l'heure de la journée ; réglages gardés d'une visite à l'autre.
 - [x] Les couches (piano, cloches, texture) entrent et sortent en fondu toutes les quelques mesures.
-- [x] Visuel abstrait qui bouge avec le son : dérive lente dans un ciel d'espace (nébuleuses, étoiles, formes éparpillées qui approchent, une nouvelle à chaque accord), lueurs des notes, grain de pellicule ; plein écran avec écran gardé allumé.
+- [x] Visuel abstrait qui bouge avec le son, entre l'espace et Kandinsky : chaque instrument a ses formes (nappe : cercles et planètes ; basse : traits ; texture : volumes en fil de fer qui vibrent ; cloches et piano : lueurs placées selon la note), traînées qui filent, grain de pellicule ; plein écran avec écran gardé allumé.
+- [x] Réglages rangés dans des sections dépliantes (ouvertes ou fermées, gardé d'une visite à l'autre).
 - [x] Sons réglables sur la page Synth, repris en direct.
 - [ ] Ses propres sons : notes isolées et textures (enregistrées dans un logiciel de musique) jouées par le générateur, dans le style d'Endel.
 - [ ] Évolution sur une session : dérive lente des paramètres, montée / plateau / descente.
