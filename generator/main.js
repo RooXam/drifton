@@ -271,9 +271,17 @@ const ctl = {
 const keySel = $("key");
 NOTE_NAMES.forEach((n, i) => keySel.append(new Option(n, i, false, i === prefs.key)));
 if (prefs.mode) $("mode").value = prefs.mode;
+let linked = null; // a progression from the Progressions page: { numerals, key } (below)
 function applyKey() {
-  harmony.setKey(Number(keySel.value), $("mode").value);
-  prefs.key = Number(keySel.value);
+  const key = Number(keySel.value);
+  harmony.setKey(key, $("mode").value);
+  if (linked) {
+    // The key of a linked progression is not saved: it is the link's, not yours. A new
+    // key transposes the progression.
+    if (key !== linked.key) { linked.key = key; gen.setProgression(progressionChords(linked.numerals, key)); showLinked(); }
+    return;
+  }
+  prefs.key = key;
   prefs.mode = $("mode").value;
   save();
 }
@@ -299,8 +307,7 @@ function applyMood(id, keepSliders = false) {
   harmony.setStyle(m.chords);
   gen.riff = m.riff;
   if (!keepSliders) {
-    $("mode").value = m.mode;
-    applyKey();
+    if (!linked) { $("mode").value = m.mode; applyKey(); } // a progression keeps its own key
     ctl.bpm.set(m.bpm);
     ctl.chordLen.set(m.chordSeconds);
     ctl.density.set(Math.round(m.density * 100));
@@ -332,6 +339,47 @@ if (MOODS[asked]) applyMood(asked);
 else applyMood(prefs.mood, prefs.bpm !== undefined && !hourChanged());
 // While the page is open, Auto follows the clock (checked every minute).
 setInterval(() => { if (hourChanged()) applyMood("auto"); }, 60000);
+
+// ---- A progression chosen on the Progressions page ----
+// generator/index.html?prog=I-V-vi-IV&tonic=0 (&mood=calm): loop those chords, one per
+// chord change, in that key, instead of the generator's own chain. The numerals are
+// read by ../progressions/theory.js, like on the Progressions page.
+function linkProgression() {
+  const q = new URLSearchParams(location.search);
+  if (!q.get("prog")) return;
+  // A "+" (augmented chord) left unencoded in a link arrives as a space: put it back.
+  const numerals = q.get("prog").replace(/ /g, "+").split("-").map((n) => n.trim()).filter(Boolean);
+  const tonic = Number(q.get("tonic"));
+  const key = Number.isInteger(tonic) && tonic >= 0 && tonic < 12 ? tonic : Number(keySel.value);
+  const chords = progressionChords(numerals, key);
+  if (!chords.length) return;
+  linked = { numerals: chords.map((c) => c.roman), key };
+  gen.setProgression(chords);
+  // The bells walk on the key's scale: natural minor if the tonic chord is minor ("i"),
+  // else major.
+  const tonicChord = linked.numerals.map(parseNumeral).find((n) => n.step === 0 && n.acc === 0);
+  keySel.value = key;
+  $("mode").value = tonicChord && tonicChord.lower ? "aeolian" : "ionian";
+  harmony.setKey(key, $("mode").value);
+  showLinked();
+}
+
+function showLinked() {
+  $("prog-note").hidden = !linked;
+  if (linked) $("prog-what").textContent = `${linked.numerals.join(" – ")} in ${KEY_NAMES[linked.key]}`;
+}
+
+// Back to the generator's own chords, in your key and mode; the address loses the link.
+$("prog-clear").addEventListener("click", () => {
+  linked = null;
+  gen.setProgression(null);
+  try { history.replaceState(null, "", location.pathname); } catch {}
+  keySel.value = prefs.key;
+  $("mode").value = prefs.mode || mood.mode;
+  applyKey();
+  showLinked();
+});
+linkProgression();
 
 // ---- Instruments ----
 

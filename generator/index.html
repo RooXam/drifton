@@ -27,6 +27,9 @@
     <div class="transport-side">
       <div class="chord" id="chord">—</div>
       <div class="status" id="status">Press play.</div>
+      <div class="status prog-note" id="prog-note" hidden>Playing a progression from
+        <a href="../progressions/index.html">Progressions</a>: <span id="prog-what"></span> ·
+        <button type="button" class="link" id="prog-clear">Clear</button></div>
       <div class="taste" role="group" aria-label="Teach it your taste">
         <button type="button" data-vote="up" aria-label="I like this" title="I like this" disabled>
           <svg viewBox="0 0 24 24"><path d="M7 11v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h3zm0 0l4-8a2.5 2.5 0 0 1 2.5 2.5V9h5.2a2 2 0 0 1 2 2.3l-1.2 7.6a2.5 2.5 0 0 1-2.5 2.1H7"/></svg>
@@ -137,6 +140,7 @@
 <script src="../synth/patches.js"></script>
 <script src="../synth/storage.js"></script>
 <script src="../synth/scope.js"></script>
+<script src="../progressions/theory.js"></script>
 <script src="harmony.js"></script>
 <script src="generator.js"></script>
 <script src="moods.js"></script>

@@ -213,12 +213,13 @@ class Generator {
     this.progression = chords && chords.length ? chords : null;
     this.step = -1;
     this.degree = 0;
-    this.barsLeft = 0; // change chord at the next bar
+    this.skip();
   }
 
   // Move on to the next chord at the next bar ("skip").
   skip() {
     this.barsLeft = 0;
+    if (this.running) this.nextChord = this.nextBar;
   }
 
   // ---- Harmony ----

@@ -59,6 +59,8 @@ button.link {
   font: inherit; color: var(--accent); cursor: pointer;
 }
 button.link:hover { text-decoration: underline; }
+.prog-note a { color: var(--fg-2); }
+.prog-note[hidden] { display: none; }
 .row.check span { width: auto; }
 
 /* Visualizer: the picture, with Play and full screen on top */
