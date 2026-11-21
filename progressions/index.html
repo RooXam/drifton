@@ -33,26 +33,52 @@
       <canvas id="keys"></canvas>
       <canvas id="guitar" hidden></canvas>
       <canvas id="push" hidden></canvas>
+      <p class="push-note" id="push-note"></p>
     </div>
     <div class="player-bar">
       <div class="seg" id="view">
         <button data-v="piano">Piano</button><button data-v="guitar">Guitar</button><button data-v="push">Push</button>
       </div>
+      <div class="seg" id="push-layout" hidden title="Push note layout">
+        <button data-v="chromatic">Chromatic</button><button data-v="inkey">In key</button>
+      </div>
       <label class="mini"><span>Tonic</span><select id="key"></select></label>
       <label class="mini tempo"><span>Tempo</span><input type="range" id="bpm" min="50" max="140" value="80"><output id="bpm-out"></output></label>
-      <button class="action" id="export" title="A chord track and a bass track, with the rhythm chosen below">Export MIDI ↓</button>
+    </div>
+    <div class="player-links">
+      <button class="action" id="export" title="A chord track and a bass track, with the rhythm and voicing chosen below">Export MIDI ↓</button>
+      <a class="action" id="to-focus" href="../generator/index.html" title="Focus music plays endlessly around these chords">Play in Focus music →</a>
+      <a class="action" id="to-sketch" href="../sketch/index.html" title="Start a sketch on these chords">Open in Sketch →</a>
     </div>
   </section>
 
   <section>
     <nav class="styles" id="styles"></nav>
     <p class="help" id="style-help"></p>
-    <div class="row"><span>Chords</span>
+    <div class="row" id="colour-row"><span>Chords</span>
       <div class="seg" id="colour">
         <button data-v="plain">Plain</button><button data-v="colour">As played in the style</button>
       </div>
     </div>
+    <div class="row"><span>Length</span>
+      <div class="seg" id="len" title="Number of chords">
+        <button data-v="any">Any</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5+</button>
+      </div>
+    </div>
     <div class="list" id="list"></div>
+  </section>
+
+  <section>
+    <h2>Analyse my MIDI file</h2>
+    <p class="help">Open a .mid file: Drifton finds its key and its chords, writes them as numerals
+      and keeps the progression in My progressions, on this device only. Works best with chords
+      held or played in a pattern; a melody alone says less.</p>
+    <div class="row"><span>One chord per</span>
+      <div class="seg" id="per"><button data-v="bar">Bar</button><button data-v="beat">Beat</button></div>
+    </div>
+    <div class="row"><button class="action" id="open-midi" type="button">Open a MIDI file</button></div>
+    <input type="file" id="midi-file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden>
+    <p class="help" id="analysis"></p>
   </section>
 
   <section>
@@ -60,6 +86,11 @@
     <div class="row"><span>Rhythm</span>
       <div class="seg" id="rhythm">
         <button data-v="held">Held</button><button data-v="pulse">Pulse</button><button data-v="push">Push</button><button data-v="arp">Arpeggio</button>
+      </div>
+    </div>
+    <div class="row"><span>Voicing</span>
+      <div class="seg" id="voicing">
+        <button data-v="close">Close</button><button data-v="open">Open</button><button data-v="drop2">Drop 2</button><button data-v="shell">Shell</button>
       </div>
     </div>
     <div class="row"><span>Sound</span>
@@ -71,7 +102,12 @@
     <p class="help">"Synth pad" plays the Pad and Bass sounds of the <a href="../synth/index.html">synth</a>,
       as you saved them. The chord notes are violet, the bass blue. In the guitar view you hear
       the notes of the chord shapes, strummed. The Push view is the chromatic note layout in
-      fourths (Push 1, 2, 3): scale pads lit softly, the tonic a bit more.</p>
+      fourths (Push 1, 2, 3): scale pads lit softly, the tonic a bit more; or the In Key
+      layout, scale notes only.</p>
+    <p class="help">Voicings (piano, Push and MIDI export): Close packs the notes and moves each
+      chord as little as possible; Open spreads every other note an octave up; Drop 2 lowers the
+      second note from the top an octave, the jazz way; Shell leaves the root to the bass and
+      plays the third, the seventh and the colours.</p>
   </section>
 
   <p class="foot">
@@ -90,9 +126,13 @@
 <script src="../synth/synth.js"></script>
 <script src="../synth/patches.js"></script>
 <script src="../synth/storage.js"></script>
+<script src="../library.js"></script>
 <script src="../score/piano.js"></script>
+<script src="../score/midi.js"></script>
 <script src="data.js"></script>
 <script src="theory.js"></script>
+<script src="voicing.js"></script>
+<script src="analyze.js"></script>
 <script src="sound.js"></script>
 <script src="player.js"></script>
 <script src="midiwrite.js"></script>
