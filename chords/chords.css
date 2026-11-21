@@ -49,5 +49,57 @@ canvas#neck {
 [hidden] { display: none !important; }
 
 .families { align-items: flex-start; }
+
+/* The tabs: one game each */
+.views { flex-wrap: wrap; }
+@media (max-width: 560px) {
+  .views { gap: 0.3rem; }
+  .views button { padding: 0.45rem 0.7rem; font-size: 0.82rem; }
+}
+
+/* Piano keyboard (guess on the piano, explore) */
+canvas.keys { background: transparent; width: 100%; max-width: 560px; height: 150px; touch-action: manipulation; cursor: pointer; }
+
+/* Place it: the neck shows 7 frets */
+canvas#place-neck { background: transparent; width: 100%; max-width: 380px; height: 470px; touch-action: none; cursor: pointer; }
+.help.center { text-align: center; margin: 0; }
+.question.small { font-size: 0.98rem; color: var(--fg-2); }
+.question.small:empty { display: none; }
+
+/* Progressions: the slots to fill in order */
+.listen { font-size: 1rem; padding: 0.6rem 1.4rem; }
+.slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.slot {
+  min-width: 4.6rem; padding: 0.5rem 0.7rem; border-radius: 12px; border: 1px solid var(--rule-2);
+  display: flex; flex-direction: column; align-items: center; gap: 0.1rem; cursor: default;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.slot b { font-size: 1.2rem; }
+.slot b s { color: var(--bad); font-weight: 400; font-size: 0.9rem; }
+.slot small { color: var(--muted); font-size: 0.72rem; }
+.slot.playing { background: var(--accent-soft); }
+.slot.right { border-color: var(--good); color: var(--good); cursor: pointer; }
+.slot.wrong { border-color: var(--bad); cursor: pointer; }
+.choices.three { grid-template-columns: repeat(3, 1fr); max-width: 480px; }
+.choices.three .choice { font-size: 1.1rem; padding: 0.75rem 0.4rem; }
+
+/* Explore */
+.ex-head { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+.ex-head h2 { font-size: 2.2rem; }
+#ex-kind { color: var(--muted); font-size: 0.92rem; }
+.ex-pick { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; width: 100%; }
+.roots { flex-wrap: wrap; justify-content: center; gap: 0.3rem; }
+.roots button { min-width: 2.7rem; padding: 0.4rem 0.5rem; }
+.ex-type-row { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; width: 100%; max-width: 480px; }
+.ex-type-row select { flex: 1 1 180px; }
+#ex-input {
+  flex: 1 1 140px; min-width: 0; background: var(--surface-2); color: var(--fg); border: 1px solid var(--rule-2);
+  border-radius: 10px; padding: 0.45rem 0.6rem; font: inherit;
+}
+.ex-notes { margin: 0; color: var(--fg); font-size: 0.95rem; line-height: 1.5; }
+.ex-notes small { color: var(--muted); font-size: 0.8rem; }
+canvas#ex-neck { background: transparent; width: 100%; max-width: 380px; height: 400px; touch-action: none; cursor: pointer; }
+.ex-nav { display: flex; align-items: center; gap: 0.8rem; color: var(--muted); font-size: 0.88rem; }
+.ex-nav .btn-round { min-width: 44px; }
 #families { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; color: var(--fg); }
 .fam { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }

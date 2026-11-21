@@ -24,6 +24,7 @@
   <section id="list-view">
     <div class="lib-bar">
       <button class="action" id="add-song">+ Add a song</button>
+      <button class="action" id="add-arr" title="Write how you play a song: bars, beats, your shapes and your strum">+ My arrangement</button>
       <button class="btn-quiet" id="export" title="Save your songs and lyrics to a file (backup, other device)">Export my library</button>
       <button class="btn-quiet" id="import">Import</button>
       <input type="file" id="import-file" accept=".json,application/json" hidden>
@@ -51,8 +52,16 @@ Am          C
 The words of the song under the chords…
 
 or: [Am]The words with [C]chords inside"></textarea>
-    <p class="help">Copy the song from a chord site (the chords above the words, or written like
+    <p class="help" id="ed-help">Copy the song from a chord site (the chords above the words, or written like
       [Am] inside the words) and paste it here. It is kept on this device only, never published.</p>
+    <div class="help arr-help" id="arr-help" hidden>
+      <p>Your own arrangement: one word per beat in each bar, "." holds the chord before.
+        A bar with a single chord lasts the whole bar. Optional settings, in any order:
+        <code>Tempo 92</code>, <code>Capo 2</code>, <code>Time 3/4</code>,
+        <code>Strum: D  D U  U D U</code> (D down, U up, x muted, a double space = no stroke;
+        <code>D DU UDU</code> works too), <code>Shapes: Am=x02210</code> (your fingerings, low E first).
+        <code>%</code> repeats a bar, <code>x2</code> after a line repeats it.</p>
+    </div>
     <div class="ed-actions">
       <button class="action" id="ed-save">Save</button>
       <button class="btn-quiet" id="ed-cancel">Cancel</button>
@@ -78,6 +87,7 @@ or: [Am]The words with [C]chords inside"></textarea>
           <div class="status" id="status"></div>
         </div>
       </div>
+      <div class="strum-view" id="strum-view" hidden></div>
       <canvas id="guitar"></canvas>
       <div class="player-bar">
         <div class="mini"><span>Transpose</span>
@@ -96,27 +106,34 @@ or: [Am]The words with [C]chords inside"></textarea>
       </div>
     </section>
 
-    <section>
+    <section class="sheet-box" id="sheet-box">
+      <div class="read-bar">
+        <button class="r-play" id="r-play" aria-label="Play / Stop"><svg viewBox="0 0 24 24"><path id="r-play-icon" d="M8 5v14l11-7z"/></svg></button>
+        <span class="r-now" id="r-now"></span>
+        <label class="mini check"><input type="checkbox" id="autoscroll"> <span>Scroll</span></label>
+        <label class="mini speed"><span>Speed</span><input type="range" id="scroll-speed" min="1" max="10" value="4"></label>
+        <button class="btn-quiet" id="reading" title="Only the chords, big, on the whole screen">Full screen</button>
+      </div>
       <div class="sections" id="sections"></div>
     </section>
 
     <section>
       <h2>Playing along</h2>
-      <label class="row"><span>Tempo</span><input type="range" id="bpm" min="40" max="160" value="80"><output id="bpm-out"></output></label>
-      <div class="row"><span>Each chord</span>
+      <label class="row"><span>Tempo</span><input type="range" id="bpm" min="40" max="220" value="80"><output id="bpm-out"></output></label>
+      <div class="row" id="beats-row"><span>Each chord</span>
         <div class="seg" id="beats"><button data-v="2">2 beats</button><button data-v="4">4 beats</button></div>
       </div>
       <div class="row"><span>Rhythm</span>
         <div class="seg" id="rhythm">
-          <button data-v="held">Held</button><button data-v="pulse">Pulse</button><button data-v="push">Push</button><button data-v="arp">Arpeggio</button>
+          <button data-v="held">Held</button><button data-v="pulse">Pulse</button><button data-v="push">Push</button><button data-v="arp">Arpeggio</button><button data-v="strum" id="strum-btn" hidden>My strum</button>
         </div>
       </div>
       <div class="row"><span>Sound</span>
-        <div class="seg" id="sound"><button data-v="piano">Piano</button><button data-v="pad">Synth pad</button></div>
+        <div class="seg" id="sound"><button data-v="piano">Piano</button><button data-v="pad">Synth pad</button><button data-v="guitar">Guitar</button></div>
       </div>
       <label class="row"><span>Volume</span><input type="range" id="volume" min="0" max="100" value="80"></label>
       <label class="row check"><input type="checkbox" id="follow" checked> <span>Scroll to the chord playing</span></label>
-      <p class="help">The chord sheets have no timing: each chord lasts the same, so this is to
+      <p class="help" id="play-help">The chord sheets have no timing: each chord lasts the same, so this is to
         practise the changes, not to play along with the record. You hear the shapes shown, with
         the capo and the tuning.</p>
     </section>
@@ -142,10 +159,15 @@ or: [Am]The words with [C]chords inside"></textarea>
 <script src="../progressions/sound.js"></script>
 <script src="../progressions/player.js"></script>
 <script src="../progressions/guitar.js"></script>
+<script src="../chords/pluck.js"></script>
 <script src="../library.js"></script>
 <script src="songs.js"></script>
 <script src="chordsym.js"></script>
 <script src="sheet.js"></script>
+<script src="arrange.js"></script>
+<script src="strum.js"></script>
+<script src="popover.js"></script>
+<script src="reader.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

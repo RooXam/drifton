@@ -1,7 +1,8 @@
 // A big chord chart you can play: touch a string to pluck it, slide across the strings to
 // strum. Strings are vertical (low E on the left), frets go down, like a chord chart.
 // What is shown depends on the hints: the dots, the open string names, the note names,
-// the root.
+// the root. In "place" mode (onPlace set) touching puts a finger on a fret instead, and
+// the check shows ✓ / ✗ under each string and the right shape in rings (ghost).
 
 const STRING_NAMES = ["E", "A", "D", "G", "B", "E"];
 const OPEN_PITCHES = [40, 45, 50, 55, 59, 64];
@@ -17,13 +18,17 @@ class Neck {
     this.show = { dots: true, strings: false, notes: false, root: null, roles: null };
     this.glow = new Array(6).fill(-1e9); // when each string was last plucked (ms)
     this.lastString = -1;
+    this.rows = 5;          // frets shown
+    this.firstFret = null;  // fixed first fret (placing fingers), or null = follow the shape
+    this.onPlace = null;    // set: touching places a finger instead of plucking (s, fret | "nut")
 
     canvas.addEventListener("pointerdown", (e) => {
+      if (this.onPlace) return this.place(e);
       canvas.setPointerCapture(e.pointerId);
       this.lastString = -1;
       this.touch(e);
     });
-    canvas.addEventListener("pointermove", (e) => { if (e.buttons || e.pointerType === "touch") this.touch(e); });
+    canvas.addEventListener("pointermove", (e) => { if (!this.onPlace && (e.buttons || e.pointerType === "touch")) this.touch(e); });
     canvas.addEventListener("pointerup", () => (this.lastString = -1));
     new ResizeObserver(() => this.draw()).observe(canvas);
   }
@@ -49,6 +54,19 @@ class Neck {
     }
     this.pluck(s);
     this.lastString = s;
+  }
+
+  // Placing fingers: which string, which fret (or above the nut: open / not played)?
+  place(e) {
+    const r = this.canvas.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const { left, gap } = this.layout(r.width);
+    const s = Math.round((x - left) / gap);
+    if (s < 0 || s > 5 || Math.abs(x - (left + s * gap)) > gap * 0.5) return;
+    const { top, fretH, first } = this.grid;
+    if (y < top) return this.onPlace(s, "nut");
+    const f = first + Math.floor((y - top) / fretH);
+    if (f >= first && f < first + this.rows) this.onPlace(s, f);
   }
 
   pluck(s) {
@@ -80,6 +98,7 @@ class Neck {
     const { canvas, g } = this;
     const dpr = devicePixelRatio || 1;
     const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return; // hidden (another tab): drawn when it shows again
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -92,11 +111,12 @@ class Neck {
     const muted = css.getPropertyValue("--muted").trim();
 
     const { left, gap } = this.layout(w);
-    const top = 46, bottom = h - (this.show.roles ? 58 : this.show.strings ? 40 : 18);
-    const rows = 5;
+    const top = 46, bottom = h - (this.show.roles ? 58 : this.show.strings || this.show.marks ? 40 : 18);
+    const rows = this.rows;
     const fretH = (bottom - top) / rows;
     const fretted = this.frets.filter((f) => f > 0);
-    const first = fretted.length && Math.max(...fretted) > rows ? Math.min(...fretted) : 1;
+    const first = this.firstFret || (fretted.length && Math.max(...fretted) > rows ? Math.min(...fretted) : 1);
+    this.grid = { top, fretH, first };
     const sx = (s) => left + s * gap;
     const fy = (f) => top + (f - first + 0.5) * fretH; // middle of fret f
 
@@ -167,7 +187,7 @@ class Neck {
         if (this.show.notes) {
           g.fillStyle = "#0a0a0f";
           g.font = `600 ${Math.round(r * 0.9)}px sans-serif`;
-          g.fillText(PC_NAMES[p % 12], sx(s), fy(f) + r * 0.32);
+          g.fillText((this.show.spell || PC_NAMES)[p % 12], sx(s), fy(f) + r * 0.32);
         }
       });
       // Open strings: their note name and root ring too, when asked.
@@ -178,8 +198,42 @@ class Neck {
           : this.show.root !== null && p % 12 === this.show.root ? rootColor : null;
         if (ring) { g.strokeStyle = ring; g.lineWidth = 3; g.beginPath(); g.arc(sx(s), top - 20, 6, 0, Math.PI * 2); g.stroke(); }
         // Note name above (the answer writes it under the string instead).
-        if (this.show.notes && !this.show.roles) { g.fillStyle = fg; g.font = "600 11px sans-serif"; g.fillText(PC_NAMES[p % 12], sx(s), top - 34); }
+        if (this.show.notes && !this.show.roles) { g.fillStyle = fg; g.font = "600 11px sans-serif"; g.fillText((this.show.spell || PC_NAMES)[p % 12], sx(s), top - 34); }
       });
+    }
+
+    // Placing fingers: the fret numbers on the side.
+    if (this.onPlace) {
+      g.fillStyle = muted;
+      g.font = "12px sans-serif";
+      g.textAlign = "right";
+      for (let k = 0; k < rows; k++) g.fillText(String(first + k), sx(0) - 14, top + (k + 0.5) * fretH + 4);
+      g.textAlign = "center";
+    }
+
+    // The right shape over the player's one (rings), once asked for: open (○) and not
+    // played (×) one row higher, so both stay readable.
+    const good = css.getPropertyValue("--good").trim() || "#7fdcc8";
+    if (this.show.ghost) {
+      const r = Math.min(gap * 0.36, fretH * 0.36) + 3;
+      this.show.ghost.forEach((f, s) => {
+        g.strokeStyle = good; g.fillStyle = good; g.lineWidth = 2.5;
+        if (f > 0) { g.beginPath(); g.arc(sx(s), fy(f), r, 0, Math.PI * 2); g.stroke(); }
+        else if (f === 0) { g.lineWidth = 1.8; g.beginPath(); g.arc(sx(s), top - 36, 5, 0, Math.PI * 2); g.stroke(); }
+        else { g.font = "15px sans-serif"; g.fillText("×", sx(s), top - 31); }
+      });
+    }
+
+    // Placing fingers, checked: under each string, right (✓) or not (✗).
+    if (this.show.marks) {
+      const bad = css.getPropertyValue("--bad").trim() || "#ff9688";
+      g.font = "600 18px sans-serif";
+      this.show.marks.forEach((ok, s) => {
+        if (ok === null) return;
+        g.fillStyle = ok ? good : bad;
+        g.fillText(ok ? "✓" : "✗", sx(s), h - 12);
+      });
+      return;
     }
 
     // The answer: under each string, its note and its role in the chord.
@@ -190,7 +244,7 @@ class Neck {
         const role = this.show.roles[p % 12];
         g.fillStyle = fg;
         g.font = "600 14px sans-serif";
-        g.fillText(PC_NAMES[p % 12], sx(s), h - 34);
+        g.fillText((this.show.spell || PC_NAMES)[p % 12], sx(s), h - 34);
         g.fillStyle = roleColor(role);
         g.font = "600 12px sans-serif";
         g.fillText(role, sx(s), h - 14);

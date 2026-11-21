@@ -1,26 +1,81 @@
-// The guessing game: a chord shape (or its sound), four names, hints one after another.
+// The Chords page: four ways to learn guitar chords, one tab each.
+// - Guess: a chord shape (or its sound), four names, hints one after another; the shape
+//   can also be shown on a piano keyboard instead of the neck.
+// - Place it (place.js): the name is given, put the fingers on the neck, check.
+// - Progressions (progression.js): hear 2 to 4 chords, find them in order.
+// - Explore (explore.js): any chord, on the neck and on the keyboard, each note's role.
+//   ?chord=Am7 in the address opens it on that chord (the Songbook links here).
+// This file: the sounds, the settings, the chords to practise, the Guess game, the tabs.
 
 const ctx = createAudio(); // ../audio.js: works on iPhone too (silent switch, gestures)
-const sound = new PluckSound(ctx);
+const sound = new PluckSound(ctx);  // the guitar
+const piano = new PianoSound(ctx);  // ../score/piano.js, for the keyboard
 const $ = (id) => document.getElementById(id);
 
 // Browsers only start audio after a touch: wake it on the first one.
 const wake = () => { if (ctx.state !== "running") ctx.resume(); };
 document.addEventListener("pointerdown", wake, true);
 
+// ---- Settings and best score, remembered in the browser ----
+
+const SAVE_KEY = "drifton.chords.v1";
+const prefs = { mode: "see", families: ["open"], volume: 80, best: 0, view: "guess", instrument: "guitar" };
+try { Object.assign(prefs, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}); } catch {}
+const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(prefs)); } catch {} };
+
+// ---- Sounds ----
+
+// Strum a shape on the guitar (`gap` seconds between strings), making the strings glow.
+function playFrets(frets, onNeck, gap = 0.03, down = true) {
+  wake();
+  const strings = frets.map((f, s) => (f < 0 ? -1 : s)).filter((s) => s >= 0);
+  if (!down) strings.reverse();
+  const t = ctx.currentTime + 0.03;
+  strings.forEach((s, i) => {
+    sound.pluck(OPEN_PITCHES[s] + frets[s], t + i * gap, gap > 0.1 ? 0.8 : 0.72);
+    if (onNeck) setTimeout(() => { onNeck.glow[s] = performance.now(); onNeck.animate(); }, 30 + i * gap * 1000);
+  });
+}
+// The same notes on the piano: together, or one by one (`gap` seconds apart).
+function playKeys(pitches, gap = 0) {
+  wake();
+  const t = ctx.currentTime + 0.03;
+  pitches.forEach((p, i) => piano.play(p, 0.65, t + i * gap, gap ? 1.2 : 2));
+}
+
+// ---- The chords to practise: the families chosen ----
+
+let songShapes = []; // "From my songs" (mysongs.js), loaded at start
+
+function pool() {
+  const all = SHAPES.concat(songShapes);
+  const list = all.filter((s) => prefs.families.includes(s.family));
+  return list.length ? list : SHAPES.filter((s) => s.family === "open");
+}
+
+const pitches = (s) => s.frets.map((f, i) => (f < 0 ? null : OPEN_PITCHES[i] + f)).filter((p) => p !== null);
+const rootOf = (name) => (chordOf(name) || { root: 0 }).root;
+
+// Three wrong answers that look like the right one: same root or same kind first.
+function lookalikes(target, n, list) {
+  const all = list.length >= n + 1 ? list : SHAPES.concat(list);
+  const seen = new Set([target.name]);
+  const others = all.filter((s) => !seen.has(s.name) && seen.add(s.name)).map((s) => ({
+    name: s.name,
+    score: (rootOf(s.name) === rootOf(target.name) ? 2 : 0) + (chordKind(s.name) === chordKind(target.name) ? 1 : 0) + Math.random() * 1.5,
+  }));
+  others.sort((a, b) => b.score - a.score);
+  return others.slice(0, n).map((o) => o.name);
+}
+const shuffle = (list) => list.map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+
+// ---- Guess: one round ----
+
 const neck = new Neck($("neck"), (s) => {
   const p = neck.pitch(s);
   if (p === null) sound.mute(); else sound.pluck(p);
 });
-
-// ---- Settings and best score, remembered in the browser ----
-
-const SAVE_KEY = "drifton.chords.v1";
-const prefs = { mode: "see", families: ["open"], volume: 80, best: 0 };
-try { Object.assign(prefs, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}); } catch {}
-const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(prefs)); } catch {} };
-
-// ---- One round ----
+const keys = new Keyboard($("keys"), (p) => playKeys([p]));
 
 let shape = null;   // the chord to guess
 let hints = 0;      // how many hints given
@@ -28,37 +83,35 @@ let wrong = false;  // a wrong answer this round
 let solved = false;
 let score = 0, streak = 0;
 
-const pitches = (s) => s.frets.map((f, i) => (f < 0 ? null : OPEN_PITCHES[i] + f)).filter((p) => p !== null);
-const rootOf = (name) => PC_NAMES.indexOf(name.match(/^[A-G][#b]?/)[0].replace("Db", "C#").replace("A#", "Bb").replace("D#", "Eb").replace("G#", "Ab").replace("Gb", "F#"));
+const onPiano = () => prefs.instrument === "piano";
+const keyNotes = () => pianoVoicing(chordOf(shape.name));
+const shown = () => (onPiano() ? keyNotes() : pitches(shape)); // the notes the player sees
 
-// The hints in order. "By ear" starts by showing the shape.
+// Show the chord with what the hints reveal so far, on the neck or the keyboard.
+function display(show) {
+  const spell = spellingOf(chordOf(shape.name)); // note names as written in this chord
+  if (onPiano()) keys.set(keyNotes(), { dots: !!show.dots, names: !!show.notes, root: show.root ?? null, roles: show.roles || null, spell });
+  else neck.set(shape.frets, { ...show, spell });
+}
+
+// The hints in order. "By ear" starts by showing the shape (or the keys).
 function hintList() {
-  const notes = [...new Set(pitches(shape).map((p) => PC_NAMES[p % 12]))];
-  const list = [
+  const spell = spellingOf(chordOf(shape.name));
+  const notes = [...new Set(shown().map((p) => spell[p % 12]))];
+  const root = rootOf(shape.name);
+  const list = onPiano() ? [
+    { show: { notes: true }, text: `The notes of the chord: ${notes.join(" · ")}. The lowest key is the bass.` },
+    { show: { root }, text: `The root, the note that names the chord, is in blue: ${spell[root]}.` },
+    { show: {}, text: `It's ${chordKind(shape.name)}.` },
+  ] : [
     { show: { strings: true }, text: "The strings, from low to high: E A D G B E. A dot on a string raises its note by one semitone per fret." },
     { show: { notes: true }, text: `The notes of the chord: ${notes.join(" · ")}.` },
-    { show: { root: rootOf(shape.name) }, text: `The root, the note that names the chord, is in blue: ${PC_NAMES[rootOf(shape.name)]}.` },
+    { show: { root }, text: `The root, the note that names the chord, is in blue: ${spell[root]}.` },
     { show: {}, text: `It's ${chordKind(shape.name)}.` },
   ];
-  if (prefs.mode === "ear") list.unshift({ show: { dots: true }, text: "Here is the shape." });
+  if (prefs.mode === "ear") list.unshift({ show: { dots: true }, text: onPiano() ? "Here are the keys." : "Here is the shape." });
+  else list.forEach((h) => (h.show.dots = true));
   return list;
-}
-
-function pool() {
-  const list = SHAPES.filter((s) => prefs.families.includes(s.family));
-  return list.length ? list : SHAPES.filter((s) => s.family === "open");
-}
-
-// Three wrong answers that look like the right one: same root or same kind first.
-function choicesFor(target) {
-  const all = pool().length >= 4 ? pool() : SHAPES;
-  const others = all.filter((s) => s.name !== target.name).map((s) => ({
-    name: s.name,
-    score: (rootOf(s.name) === rootOf(target.name) ? 2 : 0) + (chordKind(s.name) === chordKind(target.name) ? 1 : 0) + Math.random() * 1.5,
-  }));
-  others.sort((a, b) => b.score - a.score);
-  const names = [target.name, ...others.slice(0, 3).map((o) => o.name)];
-  return names.sort(() => Math.random() - 0.5);
 }
 
 function newRound() {
@@ -69,43 +122,20 @@ function newRound() {
   hints = 0;
   wrong = false;
   solved = false;
-  neck.set(shape.frets, { dots: prefs.mode === "see", strings: false, notes: false, root: null });
+  $("neck").hidden = onPiano();
+  $("keys").hidden = !onPiano();
+  $("strum").textContent = onPiano() ? "Play" : "Strum ↓";
+  display({ dots: prefs.mode === "see", strings: false, notes: false, root: null, roles: null });
   $("hints").innerHTML = "";
-  $("question").textContent = prefs.mode === "see" ? "Which chord is this?" : "Which chord do you hear? Strum it.";
-  $("choices").innerHTML = choicesFor(shape).map((n) => `<button class="choice" data-name="${n}">${n}</button>`).join("");
+  $("question").textContent = prefs.mode === "see" ? "Which chord is this?" : `Which chord do you hear? ${onPiano() ? "Play" : "Strum"} it.`;
+  $("choices").innerHTML = shuffle([shape.name, ...lookalikes(shape, 3, pool())]).map((n) => `<button class="choice" data-name="${n}">${n}</button>`).join("");
   $("next").hidden = true;
   $("hint").disabled = false;
-  if (prefs.mode === "ear" && ctx.state === "running") setTimeout(() => strum(true), 250);
+  if (prefs.mode === "ear" && ctx.state === "running") setTimeout(() => strum(), 250);
 }
 
-// The strings played by the shape, from low to high.
-const played = () => shape.frets.map((f, s) => (f < 0 ? -1 : s)).filter((s) => s >= 0);
-
-// Play the strings one after the other (`gap` seconds apart) and make each one vibrate.
-function playStrings(order, gap) {
-  wake();
-  const t = ctx.currentTime + 0.03;
-  order.forEach((s, i) => {
-    sound.pluck(OPEN_PITCHES[s] + shape.frets[s], t + i * gap, gap > 0.1 ? 0.8 : 0.72);
-    setTimeout(() => { neck.glow[s] = performance.now(); neck.animate(); }, 30 + i * gap * 1000);
-  });
-}
-const strum = (down = true) => playStrings(down ? played() : played().reverse(), 0.03);
-
-// The role of each note: its distance from the root, the way musicians name it.
-const ROLE_NAMES = {
-  R: "root", b3: "minor third", 3: "major third", 5: "fifth", b5: "flat fifth", "#5": "sharp fifth",
-  b7: "minor seventh", 7: "major seventh", 2: "second", 4: "fourth", 9: "ninth", 6: "sixth",
-};
-function rolesOf(s) {
-  const root = rootOf(s.name);
-  const roles = {};
-  for (const p of pitches(s)) {
-    const d = (p % 12 - root + 12) % 12;
-    roles[p % 12] = { 0: "R", 2: /sus2/.test(s.name) ? "2" : "9", 3: "b3", 4: "3", 5: "4", 6: "b5", 7: "5", 8: "#5", 9: "6", 10: "b7", 11: "7" }[d] || "?";
-  }
-  return roles;
-}
+const strum = () => (onPiano() ? playKeys(keyNotes()) : playFrets(shape.frets, neck));
+const oneByOne = () => (onPiano() ? playKeys(keyNotes(), 0.35) : playFrets(shape.frets, neck, 0.35));
 
 function giveHint() {
   const list = hintList();
@@ -114,9 +144,18 @@ function giveHint() {
   // Each hint adds to what is shown: keep the earlier ones.
   const show = {};
   for (const x of list.slice(0, hints)) Object.assign(show, x.show);
-  neck.set(shape.frets, show);
+  display(show);
   $("hints").insertAdjacentHTML("beforeend", `<li>${h.text}</li>`);
   $("hint").disabled = hints >= list.length;
+}
+
+// The notes of a chord with their roles, root first: "A <small>(root)</small> · C …".
+function formula(chord, notes) {
+  const spell = spellingOf(chord);
+  return [...new Set(notes.map((p) => p % 12))]
+    .sort((a, b) => ((a - chord.root + 12) % 12) - ((b - chord.root + 12) % 12))
+    .map((pc) => { const r = roleOf(chord, pc); return `${spell[pc]} <small>(${ROLE_WORDS[r] || r})</small>`; })
+    .join(" · ");
 }
 
 function finish(found) {
@@ -129,20 +168,17 @@ function finish(found) {
     streak = 0;
   }
   // Reveal everything: each note, and its role in the chord. Then play it.
-  const roles = rolesOf(shape);
-  neck.set(shape.frets, { dots: true, notes: true, root: rootOf(shape.name), roles });
-  const notes = [...new Set(pitches(shape).map((p) => p % 12))]
-    .sort((a, b) => ((a - rootOf(shape.name) + 12) % 12) - ((b - rootOf(shape.name) + 12) % 12))
-    .map((pc) => `${PC_NAMES[pc]} <small>(${ROLE_NAMES[roles[pc]] || roles[pc]})</small>`);
+  const chord = chordOf(shape.name);
+  display({ dots: true, notes: true, root: chord.root, roles: rolesFor(chord, shown()) });
   $("question").innerHTML = `${found && !wrong ? "Yes! " : ""}It's <b>${shape.name}</b>, ${chordKind(shape.name)}.` +
-    `<span class="formula">${notes.join(" · ")}</span>`;
-  document.querySelectorAll(".choice").forEach((b) => {
+    `<span class="formula">${formula(chord, shown())}</span>`;
+  document.querySelectorAll("#choices .choice").forEach((b) => {
     b.disabled = true;
     if (b.dataset.name === shape.name) b.classList.add("right");
   });
   $("next").hidden = false;
   $("hint").disabled = true;
-  strum(true);
+  strum();
   updateScore();
 }
 
@@ -163,41 +199,85 @@ $("choices").addEventListener("click", (e) => {
   updateScore();
 });
 
-$("strum").addEventListener("click", () => strum(true));
-$("arp").addEventListener("click", () => playStrings(played(), 0.35));
+$("strum").addEventListener("click", strum);
+$("arp").addEventListener("click", oneByOne);
 $("hint").addEventListener("click", giveHint);
 $("answer").addEventListener("click", () => { if (!solved) finish(false); });
 $("next").addEventListener("click", newRound);
 
 // ---- Settings ----
 
-const modeEl = $("mode");
-const paintMode = () => modeEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.v === prefs.mode));
-modeEl.addEventListener("click", (e) => {
-  const b = e.target.closest("button");
-  if (!b) return;
-  prefs.mode = b.dataset.v;
-  save();
-  paintMode();
-  newRound();
-});
-paintMode();
+function segmented(id, field, onChange) {
+  const el = $(id);
+  const paint = () => el.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.v === prefs[field]));
+  el.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    prefs[field] = b.dataset.v;
+    save();
+    paint();
+    onChange();
+  });
+  paint();
+}
+segmented("mode", "mode", newRound);
+segmented("instrument", "instrument", newRound);
 
+// The families changed: every game starts a new round with the new chords.
+const familyListeners = [newRound];
 $("families").innerHTML = FAMILIES.map((f) =>
   `<label class="fam"><input type="checkbox" value="${f.id}" ${prefs.families.includes(f.id) ? "checked" : ""}> ${f.label}</label>`).join("");
 $("families").addEventListener("change", () => {
   prefs.families = [...$("families").querySelectorAll("input:checked")].map((i) => i.value);
   save();
-  newRound();
+  familyListeners.forEach((f) => f());
 });
 
 $("volume").value = prefs.volume;
-sound.setVolume(prefs.volume / 100);
+const setVolume = () => { sound.setVolume(prefs.volume / 100); piano.setVolume(prefs.volume / 100); };
+setVolume();
 $("volume").addEventListener("input", (e) => {
   prefs.volume = Number(e.target.value);
-  sound.setVolume(prefs.volume / 100);
+  setVolume();
   save();
 });
 
+// ---- The tabs ----
+
+const VIEWS = ["guess", "place", "prog", "explore"];
+const place = setupPlace();
+const progression = setupProgression();
+const explore = setupExplore();
+familyListeners.push(() => place.newRound(), () => progression.newRound());
+
+function showView(v) {
+  prefs.view = v;
+  save();
+  for (const x of VIEWS) $(`${x}-view`).hidden = x !== v;
+  $("views").querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.v === v));
+  // Settings that only matter for some games.
+  $("mode-row").hidden = $("instrument-row").hidden = v !== "guess";
+  $("families-row").hidden = v === "explore";
+}
+$("views").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (b) showView(b.dataset.v);
+});
+
+// ?chord=Am7 (&frets=x02010): open Explore on that chord.
+const asked = new URLSearchParams(location.search);
+if (asked.get("chord")) {
+  explore.open(asked.get("chord"), asked.get("frets") ? parseFrets(asked.get("frets")) : null);
+  prefs.view = "explore";
+}
+showView(VIEWS.includes(prefs.view) ? prefs.view : "guess");
 updateScore();
 newRound();
+
+// The chords of my songs arrive a moment later (the library is read asynchronously).
+songChordShapes().then((list) => {
+  songShapes = list;
+  const n = $("families").querySelector('input[value="songs"]');
+  if (n) n.parentElement.title = `${list.length} chords from the Songbook and your songs`;
+  if (prefs.families.includes("songs")) familyListeners.forEach((f) => f());
+});

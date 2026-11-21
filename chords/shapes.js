@@ -7,6 +7,7 @@ const FAMILIES = [
   { id: "seventh", label: "Sevenths" },
   { id: "barre", label: "Barre chords" },
   { id: "colour", label: "Sus · add · slash" },
+  { id: "songs", label: "From my songs" }, // filled by mysongs.js (Songbook + my library)
 ];
 
 const SHAPES = [
@@ -37,12 +38,18 @@ const SHAPES = [
 
 // What kind of chord: used by a hint and to pick tricky wrong answers.
 function chordKind(name) {
-  if (name.includes("/")) return "a major chord with another note in the bass";
-  if (/sus/.test(name)) return "a suspended chord (no third)";
-  if (/add9/.test(name)) return "a major chord with an added ninth";
-  if (/maj7/.test(name)) return "a major seventh chord";
-  if (/m7/.test(name)) return "a minor seventh chord";
-  if (/7/.test(name)) return "a seventh chord (dominant)";
-  if (/m/.test(name)) return "a minor chord";
+  if (name.includes("/")) return `${chordKind(name.split("/")[0]).replace(/ chord.*$/, " chord")} with another note in the bass`;
+  const q = name.replace(/^[A-G][#b]?/, "");
+  if (/sus/.test(q)) return "a suspended chord (no third)";
+  if (/^(dim7|°7)/.test(q)) return "a diminished seventh chord";
+  if (/^(dim|°)/.test(q)) return "a diminished chord";
+  if (/^(aug|\+)/.test(q)) return "an augmented chord";
+  if (/^m7b5|ø/.test(q)) return "a half-diminished chord";
+  if (q === "5") return "a power chord (no third)";
+  if (/add9/.test(q)) return q.startsWith("m") ? "a minor chord with an added ninth" : "a major chord with an added ninth";
+  if (/maj7|M7/.test(q)) return "a major seventh chord";
+  if (/^m(in)?(6|9|7|11)/.test(q)) return `a minor ${/^m(in)?6/.test(q) ? "sixth" : "seventh"} chord`;
+  if (/^(6|9|7|11|13)/.test(q)) return q.startsWith("6") ? "a sixth chord" : "a seventh chord (dominant)";
+  if (/^m(?!aj)/.test(q)) return "a minor chord";
   return "a major chord";
 }
