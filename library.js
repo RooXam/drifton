@@ -5,6 +5,8 @@
 // An item: { id, kind, name, updated, ...whatever the page needs }
 //   kind "midi":   a MIDI file for Piano score       ({ data: ArrayBuffer })
 //   kind "song":   a song pasted in the Songbook      ({ text, title, artist })
+//   kind "progression": chords found in my MIDI files by Progressions
+//                       ({ roman, whole, tonic, minor, per, repeats })
 // Nothing leaves the device. Export / Import move it to a file (backup, other device).
 //
 // IndexedDB works with callbacks ("request.onsuccess"); the small `ask` helper turns them

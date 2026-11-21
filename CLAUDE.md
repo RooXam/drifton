@@ -21,7 +21,7 @@ Deux roadmaps :
   (même moteur, même design), chacun utilisable seul avec sa propre adresse.
   `index.html` (racine) est l'accueil, rangé par intention : Listen (`generator/` = « Focus
   music », dont l'ambiance Drone ; `player/` ne fait que rediriger vers elle), Play & learn (`score/`, `songbook/`, `chords/`), Make
-  (`progressions/`, `synth/`), Lab (`pads/`). Atelier Python hors ligne dans `tools/`
+  (`progressions/`, `sketch/`, `synth/`), Lab (`pads/`). Atelier Python hors ligne dans `tools/`
   (bibliothèque standard seulement ; données brutes dans `tools/data/`, ignoré par git). Une illustration SVG par outil, en nuances du violet du site. Styles partagés dans `common.css`, bibliothèque locale partagée dans
   `library.js` (IndexedDB, sur l'appareil seulement).
 - Toute page crée son `AudioContext` avec `createAudio()` (`audio.js`, chargé en premier) :
@@ -42,12 +42,13 @@ Un fichier = une brique ; l'ordre des `<script>` en bas de chaque `index.html` c
 | `fonts/` | Bricolage Grotesque (titres) et Figtree (texte), hébergées ici (hors ligne, sans service tiers), licences OFL |
 | `audio.js` | `createAudio()` : AudioContext réglé pour iPhone / iPad |
 | `library.js` | bibliothèque sur l'appareil (IndexedDB) : morceaux, paroles, MIDI ; export / import |
-| `synth/` | synthé : `util`, `params` (liste des paramètres → UI), `envelope`, `lfo`, `osc` (unisson), `voice`, `synth` (`Synth`, `MasterBus`), `effects` (`FxBus` : réverbe, écho, chaleur, bande, pulsation), `storage` (sons sauvegardés), `patches`, `keyboard`, `scope`, `main` |
-| `generator/` | Focus music : `harmony` (modes, accords, Markov, voice leading), `generator` (rôles, grille de mesures, arpèges, conducteur des couches), `moods` (ambiances, Auto selon l'heure), `visual` (visuel abstrait qui suit le son), `main` ; réutilise `synth/` |
+| `synth/` | synthé : `util`, `params` (liste des paramètres → UI), `envelope`, `lfo`, `osc` (unisson), `voice`, `synth` (`Synth`, `MasterBus`), `effects` (`FxBus` : réverbe, écho, chaleur, bande, pulsation ; `Chorus` ; envois par instrument), `storage` (sons sauvegardés), `patches`, `keyboard`, `scope`, `main` |
+| `generator/` | Focus music : `harmony` (modes, accords, Markov, voice leading), `generator` (rôles, grille de mesures, arpèges, conducteur des couches), `moods` (ambiances, Auto selon l'heure), `session` (arc de session, dérive lente, filtres qui respirent), `taste` (bandit 👍 / 👎 par ambiance), `visual` (visuel abstrait qui suit le son), `main` ; réutilise `synth/` et `progressions/theory` (`?prog=`) |
 | `player/` | redirection vers Focus music, ambiance Drone (ancienne adresse) |
 | `pads/` | Pad states (prototype) |
-| `score/` | Piano score : `midi` (lecteur MIDI), `piano` (son), `player` (transport, boucle), `roll` (notes qui tombent), `timeline`, `demo`, `main` |
-| `progressions/` | `data.js` (généré par `tools/progressions/`), `theory` (chiffres romains → accords, voicings), `player` (boucle, rythmes, `chordEvents`), `sound` (piano ou pad), `midiwrite`, `keys`, `guitar` (positions + grilles), `push`, `main` |
-| `songbook/` | `songs.js` (accords seulement), `chordsym` (symboles d'accords, transposition, tonalité), `sheet` (fiche collée → accords + paroles), `main` ; réutilise `progressions/` |
-| `chords/` | `shapes` (positions écrites à la main), `pluck` (corde Karplus-Strong), `neck` (grille jouable), `main` (jeu) |
+| `score/` | Piano score : `midi` (lecteur MIDI), `piano` (son), `player` (transport, boucle, décompte), `metronome`, `roll` (notes qui tombent), `neck` (vue guitare), `timeline`, `demo`, `main` |
+| `progressions/` | `data.js` (généré par `tools/progressions/`), `theory` (chiffres romains → accords, voicings), `voicing` (serré, ouvert, drop 2, shell), `analyze` (tonalité et accords d'un MIDI), `player` (boucle, rythmes, `chordEvents`), `sound` (piano ou pad), `midiwrite`, `keys`, `guitar` (positions + grilles), `push`, `main` |
+| `songbook/` | `songs.js` (accords seulement), `chordsym` (symboles d'accords, transposition, tonalité), `sheet` (fiche collée → accords + paroles), `arrange` (format de mes arrangements), `strum` (son de guitare, grattage, `SheetPlayer`), `popover` (fiche d'un accord), `reader` (défilement, plein écran), `main` ; réutilise `progressions/`, `chords/pluck` |
+| `chords/` | `shapes` (positions écrites à la main), `positions` (noms, rôles, positions sur le manche), `pluck` (corde Karplus-Strong), `neck` (grille jouable), `keys` (clavier), `mysongs` (accords de mes morceaux), `place`, `progression`, `explore` (modes), `main` (jeu, onglets) |
+| `sketch/` | séquenceur de clips : `song` (modèle, sauvegarde), `drums` (batterie de synthèse), `sound`, `transport` (planificateur, lancement à la mesure), `progression` (chiffres romains ↔ clips), `demo`, `midiexport`, `grid` (scènes), `editor` (pas à pas, piano roll), `pads` (jeu, enregistrement, capture), `main` |
 | `tools/progressions/` | Python, bibliothèque standard : `chords`, `key`, `styles`, `analyze` (Chordonomicon → `progressions/data.js`) |
