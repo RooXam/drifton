@@ -79,9 +79,12 @@ document.getElementById("reset").addEventListener("click", () => {
 // ---- Session: its arc, the slow drift, and what the music actually plays ----
 
 // What the sliders say. The music plays values moved a little around them by the
-// session arc and the slow drift (steer), so the sliders never jump around by themselves.
+// session arc, the slow drift and your learned tastes (steer), so the sliders never
+// jump around by themselves.
 const base = { bpm: 72, density: 0.35, movement: 0.4, reverb: 0.35, warmth: 0.55 };
 let mood = MOODS.focus;  // the mood in use (Auto: the one it picked)
+let moodId = "focus";
+const taste = new Taste(); // taste.js: what Like / Dislike / Skip have taught it
 let session = null;      // while playing: { start, arc, fading }
 // Typical drift: ±6 % density, ±4 % movement, brightness ±0.05 (on the warmth and the
 // breathing filters). Small on purpose: you should not notice it, only feel it.
@@ -91,16 +94,19 @@ function steer() {
   const t = session ? ctx.currentTime - session.start : 0;
   const e = session ? session.arc.energy(t) : 1; // 0.45 at the start and end, 1 in the middle
   const d = drift.x;
+  const k = taste.offsets(moodId);
   const clamp = (v) => Math.min(1, Math.max(0, v));
   // Low energy: fewer bells, less rhythm, a darker sound, one optional layer at a time.
-  gen.density = clamp((base.density + d.density) * (0.35 + 0.65 * e));
-  gen.movement = clamp((base.movement + d.movement) * (0.5 + 0.5 * e));
-  fx.setWarmth(clamp(base.warmth - d.bright + (1 - e) * 0.25));
-  fx.setReverb(clamp(base.reverb));
-  if (gen.bpm !== base.bpm) { gen.bpm = base.bpm; fx.setDelayTime((60 / base.bpm) * 0.75); }
+  gen.density = clamp((base.density + k.density + d.density) * (0.35 + 0.65 * e));
+  gen.movement = clamp((base.movement + k.movement + d.movement) * (0.5 + 0.5 * e));
+  const bright = k.bright + d.bright;
+  fx.setWarmth(clamp(base.warmth - bright + (1 - e) * 0.25));
+  fx.setReverb(clamp(base.reverb + k.reverb));
+  const bpm = Math.round(Math.min(115, Math.max(45, base.bpm + k.tempo)));
+  if (gen.bpm !== bpm) { gen.bpm = bpm; fx.setDelayTime((60 / bpm) * 0.75); }
   gen.maxLayers = Math.min(mood.layers || 2, e < 0.75 ? 1 : 2);
   // The breathing filters: up to an octave darker at low energy, and drifting too.
-  for (const b of Object.values(breath)) b.setBase(-(1 - e) * 1.8 + d.bright * 4);
+  for (const b of Object.values(breath)) b.setBase(-(1 - e) * 1.8 + bright * 4);
 }
 
 function makeArc(skipRise) {
@@ -158,6 +164,7 @@ function stopPlaying() {
 
 function showPlaying() {
   fx.setActive(gen.running);
+  document.querySelectorAll(".taste button").forEach((b) => (b.disabled = !gen.running));
   playBtn.classList.toggle("playing", gen.running);
   document.querySelectorAll(".play-path").forEach((p) => p.setAttribute("d", gen.running ? STOP_PATH : PLAY_PATH));
 }
@@ -166,6 +173,38 @@ playBtn.addEventListener("click", async () => {
   await ctx.resume();
   if (gen.running) stopPlaying();
   else startPlaying();
+});
+
+// ---- Learn my tastes: Like, Dislike, Skip (taste.js) ----
+
+const TASTE_SAYS = {
+  up: "Noted: more like this.",
+  down: "Noted: less like this. Trying something else.",
+  skip: "Trying something else.",
+};
+let tasteTimer = null;
+function showTaste() {
+  const said = taste.describe(moodId);
+  $("taste-info").textContent = said ? `Learned for ${mood.label}, ${said}` : `Like, Dislike and Skip teach it your taste for each mood.`;
+  $("forget").hidden = !Object.values(taste.moods).some((s) => s.votes);
+}
+document.querySelector(".taste").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-vote]");
+  if (!b || !gen.running) return;
+  const kind = b.dataset.vote;
+  taste.vote(moodId, kind);
+  steer();                           // the new variant, from now on
+  if (kind === "skip") gen.skip();   // and a new chord at the next bar
+  $("taste-msg").textContent = TASTE_SAYS[kind];
+  clearTimeout(tasteTimer);
+  tasteTimer = setTimeout(() => ($("taste-msg").textContent = ""), 3500);
+  showTaste();
+});
+$("forget").addEventListener("click", () => {
+  if (!confirm("Forget what Like, Dislike and Skip have taught, for every mood?")) return;
+  taste.forget();
+  steer();
+  showTaste();
 });
 
 // Session length: endless, or a number of minutes with a beginning, a middle and an end.
@@ -251,6 +290,7 @@ function applyMood(id, keepSliders = false) {
   prefs.mood = id;
   if (id === "auto") prefs.autoMood = real; // the mood Auto applied, to notice when the hour changes it
   mood = m;
+  moodId = real;
   // A mood with its own session length (Sleep) sets it when chosen by hand, if none was set.
   if (!keepSliders && id !== "auto" && m.session && !prefs.session) setSession(m.session);
   // Playing: the session keeps its start, with this mood's arc and fade.
@@ -272,6 +312,7 @@ function applyMood(id, keepSliders = false) {
   }
   ctl.pulse.set(keepSliders && prefs.pulse !== undefined ? prefs.pulse : Math.round(m.pulse * 100));
   steer();
+  showTaste();
   moodsEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.v === id));
   $("mood-help").textContent = (id === "auto" ? `Auto, from the time of day: ${m.label}. ` : "") + m.help;
   save();

@@ -34,6 +34,31 @@ canvas#roll { height: 220px; }
 .role .edit:hover { text-decoration: underline; }
 
 .moods, .seg.wrap { flex-wrap: wrap; }
+
+/* Like / Dislike / Skip: small, quiet, under the status line */
+.taste { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.taste button {
+  height: 34px; min-width: 34px;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule-2);
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit; font-size: 0.82rem;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.taste button[data-vote="up"], .taste button[data-vote="down"] { padding: 0; width: 34px; }
+.taste button:hover:not(:disabled) { border-color: var(--accent); color: var(--fg); }
+.taste button:disabled { opacity: 0.35; cursor: default; }
+.taste svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+.taste-msg { font-size: 0.8rem; color: var(--muted); }
+button.link {
+  background: none; border: 0; padding: 0;
+  font: inherit; color: var(--accent); cursor: pointer;
+}
+button.link:hover { text-decoration: underline; }
 .row.check span { width: auto; }
 
 /* Visualizer: the picture, with Play and full screen on top */
