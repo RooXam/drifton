@@ -151,6 +151,15 @@ const PARAM_GROUPS = [
     ]),
   },
   {
+    title: "Effects",
+    help: "This instrument's own effects, used wherever it plays (Focus music too). Chorus: copies of the sound, slightly out of tune, on both sides: wider and shimmering. Reverb and Echo: how much of it goes to the shared room and echo.",
+    params: [
+      { key: "fx.chorus", label: "Chorus", min: 0, max: 1, step: 0.01, value: 0, unit: "%" },
+      { key: "fx.reverb", label: "Reverb", min: 0, max: 1, step: 0.01, value: 0.4, unit: "%" },
+      { key: "fx.delay", label: "Echo", min: 0, max: 1, step: 0.01, value: 0.15, unit: "%" },
+    ],
+  },
+  {
     title: "Output",
     params: [
       { key: "volume", label: "Volume", min: 0, max: 1, step: 0.01, value: 0.7, unit: "%" },

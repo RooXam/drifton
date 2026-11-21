@@ -6,6 +6,10 @@
 // tape = worn-cassette wobble and hiss; chords = "sevenths" (lush), "sus" (open, hazy)
 // or "drone" (one held open chord);
 // riff = the keys repeat one short riff instead of free arpeggios.
+// Optional: layers = how many of keys / bells / texture may play at once (default 2);
+// arc = the shape of a timed session ("down": winds down all along, see session.js);
+// fade = seconds of fade out at the end of a session (default 75); session = the
+// length (minutes) a session gets when this mood is chosen and none was set.
 
 const MOODS = {
   focus: {
@@ -38,14 +42,23 @@ const MOODS = {
     mode: "dorian", bpm: 50, chordSeconds: 60, density: 0.06, movement: 0,
     reverb: 0.7, delay: 0.15, warmth: 0.7, pulse: 0, pulseRate: 4, tape: 0.1, chords: "drone", riff: false,
   },
+  sleep: {
+    label: "Sleep", help: "Very slow and dark, almost nothing happening: one layer at a time, no rhythm, no pulse. With a session length, it winds down all along and fades out over two minutes.",
+    mode: "aeolian", bpm: 50, chordSeconds: 48, density: 0.05, movement: 0,
+    reverb: 0.65, delay: 0.12, warmth: 0.88, pulse: 0, pulseRate: 4, tape: 0.06, chords: "sus", riff: false,
+    layers: 1, arc: "down", fade: 120, session: 25,
+  },
 };
 
 // The mood that suits the time of day: morning → flow, afternoon → focus, evening →
-// calm, night → night.
+// calm, night → night, and Sleep only deep in the night (1 to 5 am), when someone
+// still listening is most likely trying to sleep. Auto never sets a session length:
+// Sleep chosen by the clock does not stop the music by itself.
 function moodForNow(date = new Date()) {
   const h = date.getHours();
   if (h >= 6 && h < 12) return "flow";
   if (h >= 12 && h < 18) return "focus";
   if (h >= 18 && h < 22) return "calm";
+  if (h >= 1 && h < 5) return "sleep";
   return "night";
 }

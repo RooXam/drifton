@@ -152,7 +152,10 @@ function voiceLead(prev, tones, lo, hi, count) {
       const tie = best !== null && Math.abs(c - p) === Math.abs(best - p) && Math.random() < 0.5;
       if (better || tie) best = c;
     }
-    if (best === null) best = candidates.find((c) => !out.includes(c));
+    // No new pitch class left (a chord of 3 notes for 4 voices): double one, nearby.
+    if (best === null) {
+      for (const c of candidates) if (!out.includes(c) && (best === null || Math.abs(c - p) < Math.abs(best - p))) best = c;
+    }
     out.push(best);
     usedPc.add(mod(best, 12));
   }

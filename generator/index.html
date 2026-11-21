@@ -27,6 +27,19 @@
     <div class="transport-side">
       <div class="chord" id="chord">—</div>
       <div class="status" id="status">Press play.</div>
+      <div class="status prog-note" id="prog-note" hidden>Playing a progression from
+        <a href="../progressions/index.html">Progressions</a>: <span id="prog-what"></span> ·
+        <button type="button" class="link" id="prog-clear">Clear</button></div>
+      <div class="taste" role="group" aria-label="Teach it your taste">
+        <button type="button" data-vote="up" aria-label="I like this" title="I like this" disabled>
+          <svg viewBox="0 0 24 24"><path d="M7 11v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h3zm0 0l4-8a2.5 2.5 0 0 1 2.5 2.5V9h5.2a2 2 0 0 1 2 2.3l-1.2 7.6a2.5 2.5 0 0 1-2.5 2.1H7"/></svg>
+        </button>
+        <button type="button" data-vote="down" aria-label="Not for me" title="Not for me" disabled>
+          <svg viewBox="0 0 24 24"><path d="M17 13V3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-3zm0 0l-4 8a2.5 2.5 0 0 1-2.5-2.5V15H5.3a2 2 0 0 1-2-2.3l1.2-7.6A2.5 2.5 0 0 1 7 3h10"/></svg>
+        </button>
+        <button type="button" data-vote="skip" class="skip" title="Something else, now" disabled>Skip</button>
+        <span class="taste-msg" id="taste-msg" aria-live="polite"></span>
+      </div>
       <label class="row"><span>Volume</span><input type="range" id="volume" min="0" max="100" value="80"></label>
     </div>
   </section>
@@ -35,6 +48,10 @@
     <h2>Mood</h2>
     <div class="seg moods" id="moods"></div>
     <p class="help" id="mood-help"></p>
+    <div class="row"><span>Session</span><div class="seg wrap" id="session" role="group" aria-label="Session length"></div></div>
+    <p class="help">Endless plays until you stop it, drifting slowly. With a length, it starts gently,
+      settles, then winds down and fades out at the end: a focus session, or a sleep timer.</p>
+    <p class="help"><span id="taste-info"></span> <button type="button" class="link" id="forget" hidden>Forget my tastes</button></p>
   </section>
 
   <details class="fold" data-fold="visual" open>
@@ -123,9 +140,12 @@
 <script src="../synth/patches.js"></script>
 <script src="../synth/storage.js"></script>
 <script src="../synth/scope.js"></script>
+<script src="../progressions/theory.js"></script>
 <script src="harmony.js"></script>
 <script src="generator.js"></script>
 <script src="moods.js"></script>
+<script src="session.js"></script>
+<script src="taste.js"></script>
 <script src="visual.js"></script>
 <script src="main.js"></script>
 </body>

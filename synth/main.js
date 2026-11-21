@@ -7,10 +7,22 @@
 
 const ctx = createAudio(); // ../audio.js: works on iPhone too (silent switch, gestures)
 const master = new MasterBus(ctx);
-const instruments = Object.keys(STARTER_PATCHES).map((name) => ({
-  name,
-  synth: new Synth(ctx, currentPatch(name), master.input),
-}));
+// The shared room and echo (effects.js), kept neutral here (no warmth, no level boost)
+// so each instrument's own Reverb and Echo amounts are heard as Focus music plays them.
+const fx = new FxBus(ctx, master.input);
+fx.setWarmth(0);
+fx.out.gain.value = 1;
+
+// Each instrument: its synth → an output point → straight on, and sent to the room and
+// the echo by the amounts saved in its sound.
+const instruments = Object.keys(STARTER_PATCHES).map((name) => {
+  const out = ctx.createGain();
+  out.connect(fx.input);
+  const patch = currentPatch(name);
+  const sends = fx.connect(out, patch["fx.reverb"], patch["fx.delay"]);
+  return { name, sends, synth: new Synth(ctx, patch, out) };
+});
+const applySends = (inst) => fx.setSends(inst.sends, inst.synth.params["fx.reverb"], inst.synth.params["fx.delay"]);
 let current = instruments[0];
 
 const controls = {};    // param key → { def, input, output, seg, select }
@@ -156,6 +168,7 @@ function drawEnvelopes() {
 
 function setValue(key, value) {
   current.synth.set(key, value);
+  if (key === "fx.reverb" || key === "fx.delay") applySends(current);
   refresh(key);
   if (/^(amp|fenv)\./.test(key)) drawEnvelopes();
   scheduleSave(current);
@@ -164,6 +177,7 @@ function setValue(key, value) {
 // Back to the starter sound, and forget the saved one.
 function resetPatch() {
   current.synth.loadPatch(makePatch(current.name));
+  applySends(current);
   PatchStore.remove(current.name);
   refreshAll();
   updatePatchState();
@@ -262,6 +276,7 @@ $("import-file").addEventListener("change", async (e) => {
     const data = JSON.parse(await file.text());
     const patch = sanitizePatch(data.params || data, current.synth.params);
     current.synth.loadPatch(patch);
+    applySends(current);
     PatchStore.set(current.name, { ...patch });
     refreshAll();
     updatePatchState(`Imported ${file.name}`);
@@ -272,7 +287,7 @@ $("import-file").addEventListener("change", async (e) => {
 
 // Another tab changed the saved sounds (e.g. the same page open twice): follow it.
 PatchStore.onChange(() => {
-  for (const inst of instruments) inst.synth.loadPatch(currentPatch(inst.name));
+  for (const inst of instruments) { inst.synth.loadPatch(currentPatch(inst.name)); applySends(inst); }
   refreshAll();
   updatePatchState();
 });

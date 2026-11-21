@@ -12,6 +12,9 @@
 // A light "conductor" makes the optional layers (keys, bells, texture) fade in and out
 // every few bars, so the music keeps changing slowly without ever drawing attention.
 //
+// Chords come from the Harmony's Markov chain, or from a progression to loop (a link
+// from the Progressions page, see setProgression).
+//
 // Timing uses a "lookahead scheduler": every 100 ms a JavaScript timer looks at what
 // should happen in the next 1.5 s and schedules those notes at exact audio-clock times.
 // JS timers are imprecise (they can be late by tens of ms, more in background tabs);
@@ -41,6 +44,8 @@ class Generator {
     this.movement = 0.4;    // 0..1: how much keys and bass play in rhythm
     this.evolve = true;     // the conductor fades optional layers in and out
     this.riff = false;      // keys repeat one short riff instead of free arpeggios
+    this.maxLayers = 2;     // optional layers playing at once, at most (the session lowers it)
+    this.progression = null; // chords to loop instead of the Markov chain (setProgression)
     this.running = false;
     this.notes = [];        // log for the piano roll: { role, note, start, end }
     this.chords = [];       // log of chord changes: { t, name, roman }
@@ -55,6 +60,7 @@ class Generator {
     const t = this.ctx.currentTime + 0.1;
     this.running = true;
     this.degree = 0;
+    this.step = -1;         // position in the progression, if there is one
     this.chordCount = 0;
     this.barCount = 0;
     this.barsLeft = 0;
@@ -121,25 +127,35 @@ class Generator {
   }
 
   // How many bars the next chord lasts: around `chordSeconds`, as 1, 2, 4 or 8 bars.
+  // A progression keeps a steady length: it is a loop, it should sound like one.
   chordBars() {
-    const target = (this.chordSeconds * (0.75 + Math.random() * 0.5)) / this.barSeconds;
+    const vary = this.progression ? 1 : 0.75 + Math.random() * 0.5;
+    const target = (this.chordSeconds * vary) / this.barSeconds;
     return [1, 2, 4, 8].reduce((a, b) => (Math.abs(b - target) < Math.abs(a - target) ? b : a));
   }
 
   // ---- The conductor: layers fade in and out, one at a time ----
 
   conduct(t) {
+    // Only instruments switched on count: a layer muted on the page is not "playing".
+    const playing = OPTIONAL.filter((x) => this.inLayer[x] && this.on[x]);
+    // The session (or a mood) allows fewer layers for now: the one in the longest leaves.
+    if (playing.length > Math.max(1, this.maxLayers)) {
+      const r = playing.reduce((a, b) => (this.changedAt[a] <= this.changedAt[b] ? a : b));
+      this.inLayer[r] = false;
+      this.changedAt[r] = t;
+      this.fade(r, false, t, FADE);
+      return;
+    }
     if (Math.random() > 0.55) return; // often, nothing changes: stability first
     const choices = OPTIONAL.filter((r) => this.on[r] && !(r === "keys" && this.movement <= 0.05));
     if (!choices.length) return;
     // The layer that has stayed as it is the longest is the most likely to change, so each
     // one gets its turn (not minutes of the same layers by chance).
     const r = weightedPick(choices.map((x) => [x, t - this.changedAt[x] + 1]));
-    // Only instruments switched on count: a layer muted on the page is not "playing".
-    const playing = OPTIONAL.filter((x) => this.inLayer[x] && this.on[x]);
     // Keep at least one optional layer, at most two: never empty, never crowded.
     if (this.inLayer[r] && playing.length <= 1) return;
-    if (!this.inLayer[r] && playing.length >= 2) return;
+    if (!this.inLayer[r] && playing.length >= Math.min(2, this.maxLayers)) return;
     this.inLayer[r] = !this.inLayer[r];
     this.changedAt[r] = t;
     this.fade(r, this.inLayer[r], t, FADE);
@@ -191,14 +207,42 @@ class Generator {
     if (role === "texture") on ? this.playTexture(t, true) : this.releaseAll("texture", t);
   }
 
+  // Loop these chords instead of the Markov chain ([] or null: back to the chain).
+  // Each chord: { name, roman, root, bass, fifth, tones } (see progressionChords).
+  setProgression(chords) {
+    this.progression = chords && chords.length ? chords : null;
+    this.step = -1;
+    this.degree = 0;
+    this.skip();
+  }
+
+  // Move on to the next chord at the next bar ("skip").
+  skip() {
+    this.barsLeft = 0;
+    if (this.running) this.nextChord = this.nextBar;
+  }
+
   // ---- Harmony ----
 
-  changeChord(t) {
-    const before = this.chordCount > 0 ? this.degree : null;
+  // The next chord, as pitch classes: its notes (root first), the bass and the fifth.
+  pickChord() {
+    if (this.progression) {
+      this.step = (this.step + 1) % this.progression.length;
+      return this.progression[this.step];
+    }
     if (this.chordCount > 0) this.degree = this.harmony.nextDegree(this.degree);
+    const d = this.degree, root = this.harmony.pc(d);
+    return { ...this.harmony.chordName(d), root, bass: root, fifth: this.harmony.pc(d + 4), tones: this.harmony.chordTones(d) };
+  }
+
+  changeChord(t) {
+    const before = this.chord;
+    this.chord = this.pickChord();
+    this.tones = this.chord.tones;
+    if (this.chordCount === 0 || this.chord.name !== before.name) {
+      this.chords.push({ t, name: this.chord.name, roman: this.chord.roman });
+    }
     this.chordCount++;
-    this.tones = this.harmony.chordTones(this.degree);
-    if (this.degree !== before) this.chords.push({ t, ...this.harmony.chordName(this.degree) });
     if (this.on.pad) this.playPad(t);
     if (this.on.bass) {
       if (this.movement <= 0.35) this.playBass(t, false);
@@ -211,7 +255,7 @@ class Generator {
 
   playPad(t) {
     // A drone holds root, fifth, octave and the fifth above, low: the chord rings as one.
-    const r = pitchFrom(this.tones[0], 45);
+    const r = pitchFrom(this.chord.root, 45);
     const next = this.harmony.style === "drone" ? [r, r + 7, r + 12, r + 19]
       : voiceLead(this.held.pad, this.tones, 50, 74, 4);
     for (const n of this.held.pad) if (!next.includes(n)) this.release("pad", n, t);
@@ -220,7 +264,7 @@ class Generator {
   }
 
   playBass(t, force) {
-    const root = pitchFrom(this.tones[0], 48);
+    const root = pitchFrom(this.chord.bass, 48);
     // One chord in five, the bass rests: the low end breathes.
     const rest = !force && this.chordCount > 1 && Math.random() < 0.2;
     if (this.held.bass !== null && (rest || this.held.bass !== root)) {
@@ -235,11 +279,11 @@ class Generator {
 
   // With movement: the root on the first beat, sometimes the fifth on the "and" of 3.
   pulseBass(t) {
-    const root = pitchFrom(this.tones[0], 48);
+    const root = pitchFrom(this.chord.bass, 48);
     this.play("bass", root, 0.5, t);
     this.release("bass", root, t + this.beat * 2.4);
     if (Math.random() < this.movement * 0.6) {
-      const fifth = pitchFrom(this.harmony.pc(this.degree + 4), root);
+      const fifth = pitchFrom(this.chord.fifth, root);
       const t2 = t + this.beat * 2.5;
       this.play("bass", fifth, 0.36, t2);
       this.release("bass", fifth, t2 + this.beat * 1.2);
@@ -307,7 +351,7 @@ class Generator {
   playTexture(t, force) {
     // Only moves on about one chord in three; follows the chord's fifth.
     if (this.held.texture !== null && !force && Math.random() > 0.3) return;
-    const note = pitchFrom(this.harmony.pc(this.degree + 4), 60); // the chord's fifth
+    const note = pitchFrom(this.chord.fifth, 60); // the chord's fifth
     if (note === this.held.texture) return;
     if (this.held.texture !== null) this.release("texture", this.held.texture, t);
     this.play("texture", note, 0.5, t);
@@ -341,7 +385,13 @@ class Generator {
 
   strike(d, t) {
     const base = pitchFrom(this.harmony.root, 55);
-    const note = base + Math.floor(d / 7) * 12 + this.harmony.scale[mod(d, 7)];
+    let note = base + Math.floor(d / 7) * 12 + this.harmony.scale[mod(d, 7)];
+    // A progression can borrow chords from outside the key (bVII, a V7 in minor…): a
+    // scale note a semitone from one of its notes would grate, so it leans onto it.
+    if (this.progression && !this.tones.includes(mod(note, 12))) {
+      if (this.tones.includes(mod(note - 1, 12))) note -= 1;
+      else if (this.tones.includes(mod(note + 1, 12))) note += 1;
+    }
     this.play("bells", note, 0.25 + Math.random() * 0.35, t);
     this.release("bells", note, t + 0.3); // the bell patch keeps ringing after release
   }
@@ -378,6 +428,24 @@ class Generator {
     for (const c of this.chords) if (c.t <= t) current = c;
     return current;
   }
+}
+
+// Roman numerals (as on the Progressions page: "I", "vi", "IVadd9", "bVII", "V/7"…)
+// in a key (tonic pitch class) → chords for setProgression. makeChord comes from
+// ../progressions/theory.js. Numerals it cannot read are left out.
+function progressionChords(numerals, key) {
+  const out = [];
+  for (const text of numerals) {
+    const c = makeChord(text, key);
+    if (!c) continue;
+    const tones = [...new Set(c.intervals.map((i) => (c.root + i) % 12))];
+    // The pad voices 4 notes: a triad doubles its root (an open voicing), a power
+    // chord its root and fifth.
+    for (let i = 0; tones.length < 4; i++) tones.push(tones[i]);
+    const fifth = c.intervals.find((i) => i >= 6 && i <= 8) ?? 7; // 5th, or b5 / #5
+    out.push({ name: c.name, roman: text, root: c.root, bass: c.bass, fifth: (c.root + fifth) % 12, tones });
+  }
+  return out;
 }
 
 // Bounce off the edges: 11 → 9 when the range is 0..10.
