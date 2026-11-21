@@ -130,7 +130,7 @@
 #transpose button { min-width: 3.4rem; }
 
 canvas#overview { height: 34px; cursor: pointer; border-radius: 8px; }
-canvas.roll { height: 420px; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 10px; }
+canvas.roll { height: 420px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; border-radius: 10px; }
 canvas[hidden], .steps[hidden] { display: none; }
 
 /* Drum steps: two blocks of 8 steps (side by side when there is room) */
