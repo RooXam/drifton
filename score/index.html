@@ -45,9 +45,19 @@
     <button class="btn small" id="loop-clear" type="button">Clear</button>
     <span class="loop-info" id="loop-info"></span>
   </div>
+
+  <div class="group">
+    <span class="lbl">Metronome</span>
+    <button class="btn small toggle" id="click-on" type="button" title="A click on every beat">Click</button>
+    <select class="btn small" id="count-in" aria-label="Count-in" title="Clicks before playing starts">
+      <option value="0">No count-in</option><option value="1">Count-in 1 bar</option><option value="2">Count-in 2 bars</option>
+    </select>
+    <input type="range" id="click-volume" min="0" max="100" value="60" aria-label="Click volume" title="Click volume">
+  </div>
 </div>
 
 <canvas id="timeline" class="timeline"></canvas>
+<canvas id="neck" class="neck" hidden></canvas>
 <div class="roll-box">
   <canvas id="roll"></canvas>
   <div class="asleep" id="asleep">Tap to wake the audio</div>
@@ -56,6 +66,9 @@
 <footer class="bar">
   <div class="parts" id="parts"></div>
   <button class="btn small toggle" id="names" type="button">Note names</button>
+  <button class="btn small toggle" id="keys88" type="button" title="All 88 keys, instead of the range of the song">88 keys</button>
+  <button class="btn small toggle" id="guitar" type="button" title="The notes heard, on a guitar neck">Guitar</button>
+  <label class="group"><span class="lbl">Zoom</span><input type="range" id="zoom" min="2" max="12" step="1" value="10" aria-label="Zoom: how many seconds of notes are shown"></label>
   <label class="group"><span class="lbl">Volume</span><input type="range" id="volume" min="0" max="100" value="80"></label>
   <span class="status" id="status"></span>
 </footer>
@@ -66,8 +79,10 @@
 <script src="midi.js"></script>
 <script src="demo.js"></script>
 <script src="piano.js"></script>
+<script src="metronome.js"></script>
 <script src="player.js"></script>
 <script src="roll.js"></script>
+<script src="neck.js"></script>
 <script src="timeline.js"></script>
 <script src="main.js"></script>
 </body>

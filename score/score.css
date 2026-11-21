@@ -68,6 +68,22 @@ canvas.timeline {
   cursor: pointer;
 }
 
+/* Guitar view: a neck under the timeline, the notes heard now */
+canvas.neck {
+  flex: none;
+  width: calc(100% - 32px);
+  height: 150px;
+  margin: 0 16px 6px;
+  border-radius: 10px;
+  background: #0d0c14;
+}
+canvas.neck[hidden] { display: none; }
+@media (max-width: 560px) {
+  canvas.neck { height: 120px; }
+  .group input#click-volume { width: 64px; }
+}
+select.btn.small { width: auto; flex: none; padding-right: 2rem; }
+
 /* The canvas is absolutely placed so its own size never pushes the layout around. */
 .roll-box { flex: 1; min-height: 0; position: relative; }
 .roll-box canvas {

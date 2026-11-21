@@ -7,9 +7,19 @@ const sound = new PianoSound(ctx);
 const player = new Player(ctx, sound);
 const roll = new Roll(document.getElementById("roll"));
 const timeline = new Timeline(document.getElementById("timeline"), (t) => player.seek(t));
+const neck = new NeckView(document.getElementById("neck"));
+player.click = new Click(ctx);
 
 const $ = (id) => document.getElementById(id);
 const LAST_KEY = "drifton.score.last";
+
+// View and metronome settings, remembered in the browser.
+const PREFS_KEY = "drifton.score.prefs";
+const prefs = { click: false, countIn: 0, clickVolume: 60, zoom: 10, keys88: false, guitar: false };
+try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREFS_KEY)) || {}); } catch {}
+function savePrefs() {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch {}
+}
 
 // Browsers only start audio after a tap or a key press.
 function wake() { if (ctx.state !== "running") ctx.resume(); }
@@ -181,9 +191,46 @@ $("faster").addEventListener("click", () => setSpeed(Number($("speed").value) + 
 
 $("volume").addEventListener("input", () => sound.setVolume($("volume").value / 100));
 $("names").addEventListener("click", () => {
-  roll.showNames = !roll.showNames;
+  roll.showNames = neck.showNames = !roll.showNames;
   $("names").classList.toggle("active", roll.showNames);
 });
+
+// ---- Metronome and count-in (metronome.js, player.js) ----
+
+function applyMetronome() {
+  player.metronome = prefs.click;
+  player.countIn = prefs.countIn;
+  player.click.setVolume((prefs.clickVolume / 100) ** 1.5);
+  $("click-on").classList.toggle("active", prefs.click);
+  $("count-in").value = String(prefs.countIn);
+  $("click-volume").value = prefs.clickVolume;
+  savePrefs();
+}
+$("click-on").addEventListener("click", () => {
+  prefs.click = !prefs.click;
+  applyMetronome();
+  if (player.playing) player.seek(player.position()); // clicks from now on (or none)
+});
+$("count-in").addEventListener("change", (e) => { prefs.countIn = Number(e.target.value); applyMetronome(); });
+$("click-volume").addEventListener("input", (e) => { prefs.clickVolume = Number(e.target.value); applyMetronome(); });
+applyMetronome();
+
+// ---- View: zoom (seconds of notes shown), 88 keys, guitar neck ----
+
+function applyView() {
+  roll.window = 14 - prefs.zoom; // zoom 2..12 → 12 down to 2 seconds above the keyboard
+  roll.fullRange = prefs.keys88;
+  roll.layout();
+  $("zoom").value = prefs.zoom;
+  $("keys88").classList.toggle("active", prefs.keys88);
+  $("guitar").classList.toggle("active", prefs.guitar);
+  $("neck").hidden = !prefs.guitar;
+  savePrefs();
+}
+$("zoom").addEventListener("input", (e) => { prefs.zoom = Number(e.target.value); applyView(); });
+$("keys88").addEventListener("click", () => { prefs.keys88 = !prefs.keys88; applyView(); });
+$("guitar").addEventListener("click", () => { prefs.guitar = !prefs.guitar; applyView(); });
+applyView();
 
 // ---- Loop ----
 // Start and End snap to bar lines: pause where the passage begins, tap Start; move to
@@ -304,7 +351,13 @@ function frame() {
   const pos = player.position();
   roll.draw(pos, player.loop);
   timeline.draw(song, pos, player.loop);
-  if (song) {
+  neck.update(song, pos, (p) => roll.noteName(p));
+  // During a count-in the clock counts the beats: 1 2 3 4.
+  const count = player.playing && player.countSpan;
+  const now = ctx.currentTime;
+  if (count && now >= count.start - 0.05 && now < count.end) {
+    $("clock").textContent = `Count-in · ${Math.floor((now - count.start) / count.beat) + 1}`;
+  } else if (song) {
     const bar = song.bars.length && pos >= 0 ? ` · bar ${barIndex(pos) + 1}` : "";
     $("clock").textContent = `${clock(pos)} / ${clock(song.duration)}${bar}`;
   }
