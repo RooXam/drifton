@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<title>Drifton Sketch</title>
+<link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="sketch.css">
+</head>
+<body>
+<main class="lab sketch">
+  <header>
+    <nav class="crumbs"><a href="../index.html" class="back">← Drifton</a><a href="../progressions/index.html" class="back">Progressions</a><a href="../synth/index.html" class="back">Synth</a></nav>
+    <h1>Sketch</h1>
+    <p class="intro">
+      Catch an idea on the go: loops of drums, bass, keys and pad, launched by scene,
+      played on pads in key or drawn note by note. Then send them to Ableton Live as MIDI.
+    </p>
+  </header>
+
+  <!-- Transport: stays at the top of the screen while you scroll -->
+  <section class="bar" id="bar">
+    <button class="play" id="play" aria-label="Play / Stop (space)">
+      <svg viewBox="0 0 24 24"><path id="play-icon" d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button class="icon rec" id="rec" aria-label="Record into the selected clip" title="Record (R)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
+    </button>
+    <button class="icon" id="stop-all" aria-label="Stop all clips at the next bar" title="Stop all clips">
+      <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+    </button>
+    <div class="readout-box">
+      <b id="pos">1.1</b>
+      <span id="tempo-read">92 bpm</span>
+    </div>
+    <button class="icon" id="metro" aria-label="Metronome" title="Metronome">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M9 3h6l3.5 18h-13z"/><path d="M12 16l5-9"/></svg>
+    </button>
+    <button class="icon" id="undo" aria-label="Undo" title="Undo (Ctrl/Cmd Z)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+    </button>
+  </section>
+
+  <section class="session">
+    <div class="head-row">
+      <h2 id="project-title">Sketch</h2>
+      <div class="seg small" id="tap-mode">
+        <button data-v="launch">Tap plays</button><button data-v="edit">Tap selects</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="help">A clip starts at the next bar and loops; one clip per track. The buttons on
+      the right launch a whole row (a scene). Numbers 1–8 launch scenes, space plays and stops.</p>
+  </section>
+
+  <section class="clip-area">
+    <div class="seg tabs" id="view">
+      <button data-v="edit">Edit clip</button><button data-v="play">Play pads</button>
+    </div>
+
+    <div id="edit-view">
+      <div class="clip-head">
+        <span class="dot" id="clip-dot"></span>
+        <input id="clip-name" class="name-input" maxlength="24" placeholder="Clip name" aria-label="Clip name">
+        <span class="where" id="clip-where"></span>
+      </div>
+      <div id="clip-empty" class="empty-box">
+        <p>Empty slot. Start a clip of</p>
+        <div class="seg" id="new-clip"><button data-v="1">1 bar</button><button data-v="2">2 bars</button><button data-v="4">4 bars</button></div>
+        <p class="help">or press Record and play the pads, or play first and press Capture.</p>
+      </div>
+      <div id="clip-body">
+        <div class="tool-row">
+          <div class="seg small" id="bars"><button data-v="1">1 bar</button><button data-v="2">2 bars</button><button data-v="4">4 bars</button></div>
+          <div class="seg small" id="scale-mode"><button data-v="scale">In key</button><button data-v="chromatic">Chromatic</button></div>
+          <div class="seg small" id="octave"><button data-v="-1" aria-label="View an octave lower">▼</button><button data-v="1" aria-label="View an octave higher">▲</button></div>
+        </div>
+        <canvas id="overview" aria-label="The whole clip; tap a bar to edit it"></canvas>
+        <div id="steps" class="steps"></div>
+        <canvas id="roll" class="roll"></canvas>
+        <label class="row"><span>Velocity</span><input type="range" id="velocity" min="10" max="100" value="80"><output id="velocity-out"></output></label>
+        <div class="tool-row actions">
+          <button data-a="quantize">Quantize</button>
+          <button data-a="duplicate">Duplicate</button>
+          <button data-a="double">×2 length</button>
+          <button data-a="clear">Clear</button>
+          <button data-a="delete">Delete</button>
+        </div>
+        <div class="tool-row actions" id="transpose">
+          <button data-a="t-12">−8va</button><button data-a="t-1">−1</button>
+          <button data-a="t1">+1</button><button data-a="t12">+8va</button>
+        </div>
+        <div class="tool-row actions">
+          <button data-a="export" class="strong">Export clip .mid</button>
+          <button data-a="focus" id="to-focus">Play in Focus music</button>
+        </div>
+        <p class="help" id="edit-help"></p>
+      </div>
+    </div>
+
+    <div id="play-view" hidden>
+      <div class="tool-row">
+        <div class="seg small" id="pad-track"></div>
+      </div>
+      <div class="tool-row">
+        <div class="seg small" id="pad-octave"><button data-v="-1">Oct −</button><button data-v="1">Oct +</button></div>
+        <button class="action" id="capture" title="Turn what you just played into a clip">Capture</button>
+        <span class="pad-status" id="pad-status"></span>
+      </div>
+      <div class="pads" id="pads"></div>
+      <p class="help">The pads play the track chosen above, in key: rows a fourth apart, the key
+        note lit; hit higher on a pad to play louder. With Record on, what you play goes into
+        the clip playing on this track. Capture turns your last phrase into a clip. On a
+        computer, keys A to L play too.</p>
+    </div>
+  </section>
+
+  <details class="fold" data-fold="song">
+    <summary><h2>Song</h2></summary>
+    <div class="fold-body">
+      <label class="row"><span>Tempo</span><input type="range" id="bpm" min="60" max="160" value="92"><output id="bpm-out"></output></label>
+      <label class="row"><span>Swing</span><input type="range" id="swing" min="0" max="100" value="0"><output id="swing-out"></output></label>
+      <label class="row"><span>Key</span><select id="key"></select></label>
+      <label class="row"><span>Scale</span><select id="scale"></select></label>
+      <label class="row check"><input type="checkbox" id="metronome"> <span>Metronome</span></label>
+      <label class="row check"><input type="checkbox" id="quantize"> <span>Quantize what I record to 1/16</span></label>
+      <label class="row"><span>Volume</span><input type="range" id="volume" min="0" max="100" value="80"><output id="volume-out"></output></label>
+      <label class="row"><span>Space</span><input type="range" id="space" min="0" max="100" value="30"><output id="space-out"></output></label>
+      <label class="row"><span>Echo</span><input type="range" id="echo" min="0" max="100" value="25"><output id="echo-out"></output></label>
+      <p class="help">Key and scale set the pads and the rows of the piano roll. 100 % swing is a
+        triplet shuffle. Volume, space and echo belong to this device, not to the project.</p>
+    </div>
+  </details>
+
+  <details class="fold" data-fold="tracks">
+    <summary><h2>Tracks</h2></summary>
+    <div class="fold-body">
+      <div id="mix"></div>
+      <p class="help">The sounds come from the <a href="../synth/index.html">synth</a>'s starter sounds;
+        the drums are synthesized too, no samples.</p>
+    </div>
+  </details>
+
+  <details class="fold" data-fold="export">
+    <summary><h2>To Ableton Live</h2></summary>
+    <div class="fold-body">
+      <div class="tool-row">
+        <select id="export-scene" aria-label="Scene to export"></select>
+        <button class="action" id="export-scene-btn">Export scene .mid</button>
+        <button class="action quiet" id="rename-scene">Rename scene</button>
+      </div>
+      <p class="help">One MIDI track per instrument, named, at the project tempo; drums on
+        channel 10 with General MIDI notes, so a Drum Rack plays them as they are. On a phone
+        the share sheet opens: AirDrop the file to your Mac and drop it into Live.</p>
+    </div>
+  </details>
+
+  <details class="fold" data-fold="projects">
+    <summary><h2>Projects</h2></summary>
+    <div class="fold-body">
+      <div class="projects" id="projects"></div>
+      <div class="tool-row actions">
+        <button id="p-new">New</button><button id="p-rename">Rename</button>
+        <button id="p-dup">Duplicate</button><button id="p-del">Delete</button>
+      </div>
+      <div class="tool-row actions">
+        <button id="p-export">Export .json</button>
+        <label class="file-btn">Import .json<input type="file" id="p-import" accept=".json,application/json" hidden></label>
+      </div>
+      <p class="help">Projects are saved on this device as you go (nothing leaves it). Export a
+        project to keep a copy or move it to another device.</p>
+    </div>
+  </details>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</main>
+<script src="../audio.js"></script>
+<script src="../synth/util.js"></script>
+<script src="../synth/params.js"></script>
+<script src="../synth/envelope.js"></script>
+<script src="../synth/lfo.js"></script>
+<script src="../synth/osc.js"></script>
+<script src="../synth/voice.js"></script>
+<script src="../synth/synth.js"></script>
+<script src="../synth/effects.js"></script>
+<script src="../synth/patches.js"></script>
+<script src="../progressions/theory.js"></script>
+<script src="../progressions/midiwrite.js"></script>
+<script src="song.js"></script>
+<script src="drums.js"></script>
+<script src="sound.js"></script>
+<script src="transport.js"></script>
+<script src="progression.js"></script>
+<script src="demo.js"></script>
+<script src="midiexport.js"></script>
+<script src="grid.js"></script>
+<script src="editor.js"></script>
+<script src="pads.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
