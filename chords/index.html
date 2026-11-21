@@ -14,12 +14,17 @@
     <a href="../index.html" class="back">← Drifton</a>
     <h1>Chords</h1>
     <p class="intro">
-      A guessing game to learn guitar chords. Touch a string to hear it, slide across the
-      strings to strum, ask for a hint when you're stuck.
+      Games to learn guitar chords. Touch a string to hear it, slide across the strings to
+      strum, ask for a hint when you're stuck. Or explore any chord, on the neck and on a piano.
     </p>
   </header>
 
-  <section class="game">
+  <div class="seg views" id="views">
+    <button data-v="guess">Guess</button><button data-v="place">Place it</button><button data-v="prog">Progressions</button><button data-v="explore">Explore</button>
+  </div>
+
+  <!-- Guess: which chord is this? -->
+  <section class="game" id="guess-view">
     <div class="scorebar">
       <span>Score <b id="score">0</b></span>
       <span>Streak <b id="streak">0</b></span>
@@ -27,6 +32,7 @@
     </div>
     <div class="question" id="question">Which chord is this?</div>
     <canvas id="neck"></canvas>
+    <canvas id="keys" class="keys" hidden></canvas>
     <div class="actions">
       <button class="btn-round" id="strum">Strum ↓</button>
       <button class="btn-round" id="arp">One by one</button>
@@ -38,21 +44,97 @@
     <button class="action next" id="next">Next chord →</button>
   </section>
 
+  <!-- Place it: put the fingers where they go -->
+  <section class="game" id="place-view" hidden>
+    <div class="scorebar"><span>Right first time <b id="place-right">0</b> of <b id="place-rounds">0</b></span></div>
+    <div class="question" id="place-question"></div>
+    <canvas id="place-neck"></canvas>
+    <p class="help center">Touch a fret to put a finger there, touch it again to lift it.
+      Above the nut: open string (○) or not played (×).</p>
+    <div class="actions">
+      <button class="btn-round" id="place-strum">Strum ↓</button>
+      <button class="btn-round" id="place-clear">Clear</button>
+      <button class="btn-round" id="place-show">Show the shape</button>
+    </div>
+    <button class="action next" id="place-check">Check</button>
+    <div class="question small" id="place-feedback"></div>
+    <button class="action next" id="place-next" hidden>Next chord →</button>
+  </section>
+
+  <!-- Progressions: hear a few chords, find them in order -->
+  <section class="game" id="prog-view" hidden>
+    <div class="scorebar"><span>All right <b id="prog-right">0</b> of <b id="prog-rounds">0</b></span></div>
+    <div class="question" id="prog-question"></div>
+    <button class="btn-round listen" id="prog-play">▶ Listen</button>
+    <div class="slots" id="slots"></div>
+    <div class="choices three" id="prog-choices"></div>
+    <button class="action next" id="prog-next" hidden>Next progression →</button>
+  </section>
+
+  <!-- Explore: any chord, on the neck and on a piano -->
+  <section class="game explore" id="explore-view" hidden>
+    <div class="ex-head">
+      <h2 id="ex-name">C</h2>
+      <span id="ex-kind"></span>
+    </div>
+    <div class="ex-pick">
+      <div class="seg roots" id="ex-roots"></div>
+      <div class="ex-type-row">
+        <select id="ex-type" aria-label="Chord type"></select>
+        <input type="text" id="ex-input" autocomplete="off" spellcheck="false" placeholder="or type: F#m7, D/F#" aria-label="Chord name">
+      </div>
+    </div>
+    <p class="ex-notes" id="ex-notes"></p>
+    <canvas id="ex-neck"></canvas>
+    <div class="ex-nav">
+      <button class="btn-round" id="ex-prev" aria-label="Previous position">←</button>
+      <span id="ex-pos"></span>
+      <button class="btn-round" id="ex-next" aria-label="Next position">→</button>
+    </div>
+    <div class="actions">
+      <button class="btn-round" id="ex-guitar-play">Strum ↓</button>
+      <button class="btn-round" id="ex-guitar-arp">One by one</button>
+    </div>
+    <canvas id="ex-keys" class="keys"></canvas>
+    <div class="actions">
+      <button class="btn-round" id="ex-piano-play">Play on the piano</button>
+    </div>
+  </section>
+
   <section>
-    <h2>Game</h2>
-    <div class="row"><span>Mode</span>
+    <h2>Settings</h2>
+    <div class="row" id="mode-row"><span>Mode</span>
       <div class="seg" id="mode"><button data-v="see">See the shape</button><button data-v="ear">By ear</button></div>
     </div>
-    <div class="row families"><span>Chords</span><div id="families"></div></div>
+    <div class="row" id="instrument-row"><span>Show on</span>
+      <div class="seg" id="instrument"><button data-v="guitar">Guitar</button><button data-v="piano">Piano</button></div>
+    </div>
+    <div class="row families" id="families-row"><span>Chords</span><div id="families"></div></div>
     <label class="row"><span>Volume</span><input type="range" id="volume" min="0" max="100" value="80"></label>
     <p class="help">Fewer hints, more points (3 without any). A wrong answer ends the streak.
-      "By ear": the shape is hidden, listen and guess; the first hint shows it.</p>
+      "By ear": the shape is hidden, listen and guess; the first hint shows it.
+      "From my songs": the chords of the Songbook, and of the songs you added there (read on
+      this device only).</p>
   </section>
 </main>
 <script src="../audio.js"></script>
+<script src="../progressions/theory.js"></script>
+<script src="../progressions/guitar.js"></script>
+<script src="../score/piano.js"></script>
+<script src="../library.js"></script>
+<script src="../songbook/chordsym.js"></script>
+<script src="../songbook/songs.js"></script>
+<script src="../songbook/sheet.js"></script>
+<script src="../songbook/arrange.js"></script>
 <script src="shapes.js"></script>
 <script src="pluck.js"></script>
 <script src="neck.js"></script>
+<script src="keys.js"></script>
+<script src="positions.js"></script>
+<script src="mysongs.js"></script>
+<script src="place.js"></script>
+<script src="progression.js"></script>
+<script src="explore.js"></script>
 <script src="main.js"></script>
 </body>
 </html>
